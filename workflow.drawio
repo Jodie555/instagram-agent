@@ -1,0 +1,81 @@
+<mxfile host="app.diagrams.net" agent="GitHub Copilot">
+  <diagram name="Instagram Agent Workflow" id="instagram-agent-workflow">
+    <mxGraphModel dx="1671" dy="1096" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;" value="Instagram Multi-Agent Workflow" vertex="1">
+          <mxGeometry height="40" width="400" x="284" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="creator" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;arcSize=20;" value="&lt;b&gt;ig-creator&lt;/b&gt;&lt;br&gt;Drafts posts" vertex="1">
+          <mxGeometry height="70" width="180" x="160" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="reviewer" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;arcSize=20;" value="&lt;b&gt;ig-reviewer&lt;/b&gt;&lt;br&gt;Analyses results" vertex="1">
+          <mxGeometry height="70" width="180" x="730" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="lessons" parent="1" style="shape=document;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" value="&lt;b&gt;instagram/lessons.md&lt;/b&gt;&lt;br&gt;Append-only shared memory" vertex="1">
+          <mxGeometry height="60" width="220" x="424" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="posts" parent="1" style="shape=folder;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;tabWidth=180;tabHeight=0;" value="&lt;b&gt;instagram/posts/&lt;/b&gt;&lt;br&gt;YYYY-MM-DD.md" vertex="1">
+          <mxGeometry height="60" width="180" x="120" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="metrics" parent="1" style="shape=folder;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;tabWidth=180;tabHeight=0;" value="&lt;b&gt;instagram/metrics/&lt;/b&gt;&lt;br&gt;&lt;post_id&gt;.json" vertex="1">
+          <mxGeometry height="60" width="180" x="730" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="mcp" parent="1" style="shape=hexagon;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;perimeter=hexagonPerimeter2;" value="&lt;b&gt;MCP Server&lt;/b&gt;&lt;br&gt;tools/ig-mcp-server.js&lt;br&gt;(Instagram Graph API)" vertex="1">
+          <mxGeometry height="70" width="220" x="424" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="instagram" parent="1" style="shape=mxgraph.cisco.sites.generic_building;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;" value="Instagram Platform" vertex="1">
+          <mxGeometry height="60" width="60" x="454" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="instagram-label" parent="1" style="text;html=1;align=center;fontSize=12;" value="Instagram" vertex="1">
+          <mxGeometry height="20" width="80" x="444" y="688" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="creator" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#6c8ebf;fontColor=#6c8ebf;fontSize=11;" target="lessons" value="1. reads lessons">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="creator" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#6c8ebf;fontColor=#6c8ebf;fontSize=11;" target="posts" value="2. writes draft">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="creator" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#b85450;fontColor=#b85450;fontSize=11;" target="mcp" value="3. publish">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" edge="1" parent="1" source="mcp" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#b85450;" target="instagram" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" edge="1" parent="1" source="reviewer" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0;entryDx=0;entryDy=0;strokeColor=#82b366;fontColor=#82b366;fontSize=11;" target="posts" value="reads post">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" edge="1" parent="1" source="reviewer" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#82b366;fontColor=#82b366;fontSize=11;" target="metrics" value="4. reads metrics">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7" edge="1" parent="1" source="reviewer" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#82b366;fontColor=#82b366;fontSize=11;" target="lessons" value="5. appends lessons">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e8" edge="1" parent="1" source="lessons" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#d6b656;fontColor=#d6b656;fontSize=11;dashed=1;curved=1;exitY=0.5;" target="creator" value="next cycle →">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="100" y="210" />
+              <mxPoint x="100" y="375" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="leg-title" parent="1" style="text;html=1;fontStyle=1;fontSize=12;" value="Legend" vertex="1">
+          <mxGeometry height="20" width="80" x="940" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1" parent="1" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="Agent" vertex="1">
+          <mxGeometry height="30" width="100" x="940" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2" parent="1" style="shape=folder;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value="File / Folder" vertex="1">
+          <mxGeometry height="30" width="100" x="940" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3" parent="1" style="shape=hexagon;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;perimeter=hexagonPerimeter2;" value="MCP / API" vertex="1">
+          <mxGeometry height="30" width="100" x="940" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="leg4" parent="1" style="text;html=1;fontSize=11;fontColor=#d6b656;" value="Feedback loop" vertex="1">
+          <mxGeometry height="20" width="120" x="940" y="330" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

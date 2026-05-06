@@ -1,0 +1,10 @@
+{
+  "name": "ig-mcp-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "ig-mcp-server": "./ig-mcp-server.js" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}
