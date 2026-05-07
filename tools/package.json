@@ -1,10 +1,22 @@
 {
   "name": "ig-mcp-server",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "bin": { "ig-mcp-server": "./ig-mcp-server.js" },
+  "bin": {
+    "ig-mcp-server": "./ig-mcp-server.js",
+    "ig-pipeline": "./auto-pipeline.js"
+  },
+  "scripts": {
+    "pipeline": "node auto-pipeline.js",
+    "optimize": "node agents/optimizer.js",
+    "design": "node agents/canva-designer.js",
+    "publish": "node agents/publisher.js",
+    "review": "node agents/reviewer.js",
+    "canva-auth": "node canva-auth.js"
+  },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
     "@modelcontextprotocol/sdk": "^1.0.0"
   }
 }

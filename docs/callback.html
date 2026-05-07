@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Canva OAuth Callback</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #f5f5f5;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem 2.5rem;
+      max-width: 540px;
+      width: 100%;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    h1 { font-size: 1.4rem; margin-bottom: 0.5rem; }
+    .error h1 { color: #c0392b; }
+    p { color: #555; margin: 0.5rem 0 1.5rem; }
+    .code-box {
+      background: #f0f4ff;
+      border: 1px solid #c3d0f7;
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: monospace;
+      font-size: 0.85rem;
+      word-break: break-all;
+      text-align: left;
+      margin-bottom: 1.25rem;
+      user-select: all;
+    }
+    button {
+      background: #7c3aed;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1.4rem;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+    button:hover { background: #6d28d9; }
+    .tick { color: #16a34a; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const code  = params.get('code');
+  const error = params.get('error');
+  const root  = document.getElementById('root');
+
+  if (error || !code) {
+    root.innerHTML = `
+      <div class="card error">
+        <h1>Authorization failed</h1>
+        <p>${error || 'No authorization code returned.'}</p>
+        <p>Close this tab and try running <code>node tools/canva-auth.js</code> again.</p>
+      </div>`;
+  } else {
+    root.innerHTML = `
+      <div class="card">
+        <h1>&#x2705; Canva authorized!</h1>
+        <p>Copy the code below and paste it into your terminal when prompted:</p>
+        <div class="code-box" id="code">${code}</div>
+        <button onclick="copy()">Copy code</button>
+        <p id="status" style="margin-top:0.75rem;font-size:0.85rem;color:#555;"></p>
+      </div>`;
+  }
+
+  function copy() {
+    navigator.clipboard.writeText(code).then(() => {
+      document.getElementById('status').innerHTML = '<span class="tick">&#10003; Copied!</span> Now paste it in your terminal.';
+    });
+  }
+</script>
+</body>
+</html>

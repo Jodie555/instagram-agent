@@ -25,6 +25,7 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { fillTemplate, exportDesign } from './agents/canva.js';
 
 const ROOT = process.env.IG_DATA_DIR
   || path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\//, '')), '..', 'instagram');
@@ -56,6 +57,30 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         type: 'object',
         properties: { post_id: { type: 'string' } },
         required: ['post_id'],
+      },
+    },
+    {
+      name: 'canva_fill_template',
+      description: 'Autofill a Canva brand template with text fields and return the new design id.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          template_id: { type: 'string', description: 'Canva template id (from template URL)' },
+          headline:    { type: 'string', description: 'Main headline text for the design' },
+          tagline:     { type: 'string', description: 'Supporting tagline / subtext (optional)' },
+        },
+        required: ['template_id', 'headline'],
+      },
+    },
+    {
+      name: 'canva_export',
+      description: 'Export a Canva design as a PNG and return a public image URL.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          design_id: { type: 'string', description: 'Design id returned by canva_fill_template' },
+        },
+        required: ['design_id'],
       },
     },
   ],
@@ -107,6 +132,19 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
         ],
       };
     }
+  }
+
+  if (name === 'canva_fill_template') {
+    const designId = await fillTemplate(args.template_id, {
+      headline: args.headline,
+      ...(args.tagline ? { tagline: args.tagline } : {}),
+    });
+    return { content: [{ type: 'text', text: JSON.stringify({ design_id: designId }) }] };
+  }
+
+  if (name === 'canva_export') {
+    const imageUrl = await exportDesign(args.design_id);
+    return { content: [{ type: 'text', text: JSON.stringify({ image_url: imageUrl }) }] };
   }
 
   throw new Error(`Unknown tool: ${name}`);

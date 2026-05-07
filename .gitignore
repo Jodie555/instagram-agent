@@ -8,6 +8,9 @@ tools/node_modules/
 # Instagram access token (never commit secrets)
 *.token
 
+# Canva OAuth tokens (never commit secrets)
+tools/.canva-tokens.json
+
 # VS Code local settings (keep mcp.json and chatmodes tracked)
 .vscode/settings.json
 
