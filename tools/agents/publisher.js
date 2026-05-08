@@ -1,12 +1,11 @@
 /**
- * Publisher agent — publishes a post draft to Instagram.
+ * Publisher agent — publishes a post draft to Instagram via the Graph API.
  *
- * Currently a STUB (mirrors tools/ig-mcp-server.js). Replace `publishToInstagram`
- * with real Graph API calls when ready.
- *
- * Required env (when implementing for real):
+ * Required env vars for real publishing:
  *   IG_ACCESS_TOKEN  — long-lived Instagram Graph API token
  *   IG_USER_ID       — Instagram Business/Creator account id
+ *
+ * Falls back to stub mode if env vars are not set.
  */
 
 import path from 'node:path';
@@ -32,18 +31,65 @@ export function parsePostMarkdown(md) {
 }
 
 /**
- * STUB — replace with real Instagram Graph API calls.
- *   1. POST /{ig-user-id}/media           (creates container with image_url + caption)
- *   2. POST /{ig-user-id}/media_publish   (publishes the container)
+ * Publish a post to Instagram via the Graph API.
+ *
+ * Flow:
+ *   1. POST /{ig-user-id}/media          → creates a media container
+ *   2. POST /{ig-user-id}/media_publish  → publishes the container
+ *
+ * Required env vars:
+ *   IG_ACCESS_TOKEN  — long-lived Instagram Graph API token
+ *   IG_USER_ID       — Instagram Business/Creator account id
+ *
+ * imageUrl must be a publicly accessible URL (Instagram fetches it server-side).
+ * If no imageUrl is provided, falls back to stub mode.
  */
 async function publishToInstagram({ caption, imageUrl }) {
-  if (!process.env.IG_ACCESS_TOKEN) {
+  const token = process.env.IG_ACCESS_TOKEN;
+  const userId = process.env.IG_USER_ID;
+
+  if (!token || !userId) {
     const post_id = `stub_${Date.now()}`;
-    console.log(`[publisher] STUB mode (no IG_ACCESS_TOKEN). Generated id: ${post_id}`);
+    console.log(`[publisher] STUB mode (IG_ACCESS_TOKEN or IG_USER_ID not set). Generated id: ${post_id}`);
     return { post_id, stub: true };
   }
-  // TODO: implement real Graph API calls here
-  throw new Error('Real Instagram publishing not yet implemented. Set up Graph API calls.');
+
+  const base = 'https://graph.facebook.com/v19.0';
+
+  // Step 1 — create media container
+  console.log('[publisher] Creating media container...');
+  const containerRes = await fetch(`${base}/${userId}/media`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      image_url: imageUrl,
+      caption,
+      access_token: token,
+    }),
+  });
+  const containerData = await containerRes.json();
+  if (!containerRes.ok || containerData.error) {
+    throw new Error(`IG media container error: ${JSON.stringify(containerData.error ?? containerData)}`);
+  }
+  const containerId = containerData.id;
+  console.log(`[publisher] Container created: ${containerId}`);
+
+  // Step 2 — publish the container
+  console.log('[publisher] Publishing container...');
+  const publishRes = await fetch(`${base}/${userId}/media_publish`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      creation_id: containerId,
+      access_token: token,
+    }),
+  });
+  const publishData = await publishRes.json();
+  if (!publishRes.ok || publishData.error) {
+    throw new Error(`IG publish error: ${JSON.stringify(publishData.error ?? publishData)}`);
+  }
+
+  return { post_id: publishData.id, stub: false };
 }
 
 /**

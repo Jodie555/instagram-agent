@@ -106,18 +106,18 @@ async function canvaFetch(method, path_, body) {
  * @returns {Promise<string>}  — New design id
  */
 export async function fillTemplate(templateId, fields) {
-  const data = Object.entries(fields).map(([name, value]) => ({
-    name,
-    type: 'text',
-    text: value,
-  }));
+  // Canva expects data as an object: { fieldName: { type, text }, ... }
+  const data = Object.fromEntries(
+    Object.entries(fields).map(([name, value]) => [name, { type: 'text', text: value }])
+  );
 
   const resp = await canvaFetch('POST', '/autofills', {
     brand_template_id: templateId,
     data,
   });
 
-  // Autofill is async — poll until complete
+  // Autofill requires Canva Enterprise. A 403 here usually means the account
+  // is not on an Enterprise plan or the user is not a member of the org.
   const jobId = resp.job?.id;
   if (!jobId) throw new Error(`Unexpected Canva autofill response: ${JSON.stringify(resp)}`);
 
@@ -165,4 +165,29 @@ async function pollExportJob(jobId, maxWaitMs = 60_000) {
     if (status === 'failed')  throw new Error(`Canva export job failed: ${JSON.stringify(resp)}`);
   }
   throw new Error(`Canva export timed out after ${maxWaitMs / 1000}s`);
+}
+
+/**
+ * List all brand templates visible to the authenticated user.
+ * Use this to find the correct brand_template_id.
+ */
+export async function listBrandTemplates() {
+  let templates = [];
+  let continuation = undefined;
+  do {
+    const query = continuation ? `?continuation=${continuation}` : '';
+    const resp = await canvaFetch('GET', `/brand-templates${query}`);
+    templates = templates.concat(resp.items || []);
+    continuation = resp.continuation;
+  } while (continuation);
+  return templates;
+}
+
+/**
+ * Get the autofill dataset (field names) for a brand template.
+ * Use this to see what field names are available before calling fillTemplate.
+ */
+export async function getTemplateDataset(templateId) {
+  const resp = await canvaFetch('GET', `/brand-templates/${templateId}/dataset`);
+  return resp.dataset || {};
 }

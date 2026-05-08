@@ -13,10 +13,12 @@
     "design": "node agents/canva-designer.js",
     "publish": "node agents/publisher.js",
     "review": "node agents/reviewer.js",
-    "canva-auth": "node canva-auth.js"
+    "canva-auth": "node canva-auth.js",
+    "canva-list": "node canva-list-templates.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
-    "@modelcontextprotocol/sdk": "^1.0.0"
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "openai": "^6.37.0"
   }
 }
