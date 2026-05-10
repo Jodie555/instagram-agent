@@ -13,9 +13,13 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { config as dotenvConfig } from 'dotenv';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(__dirname, '..', '..');
+
+// Load .env from repo root (silently ignored if file doesn't exist)
+dotenvConfig({ path: path.join(REPO_ROOT, '.env') });
 
 // ── Backend detection ────────────────────────────────────────────────────────
 

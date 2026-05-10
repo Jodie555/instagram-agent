@@ -14,6 +14,10 @@ tools/.canva-tokens.json
 # VS Code local settings (keep mcp.json and chatmodes tracked)
 .vscode/settings.json
 
+# Local setup files — contain credentials, never commit
+setup-claude-desktop.ps1
+claude_desktop_config.json
+
 # OS
 .DS_Store
 Thumbs.db

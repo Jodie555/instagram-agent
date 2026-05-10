@@ -31,6 +31,28 @@ const ROOT = process.env.IG_DATA_DIR
   || path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\//, '')), '..', 'instagram');
 const METRICS_DIR = path.join(ROOT, 'metrics');
 
+const IG_TOKEN   = process.env.IG_ACCESS_TOKEN;
+const IG_USER_ID = process.env.IG_USER_ID;
+const GRAPH_BASE = 'https://graph.facebook.com/v19.0';
+
+async function graphPost(endpoint, params) {
+  const url = new URL(`${GRAPH_BASE}${endpoint}`);
+  Object.entries({ ...params, access_token: IG_TOKEN }).forEach(([k, v]) =>
+    url.searchParams.set(k, v)
+  );
+  const res = await fetch(url.toString(), { method: 'POST' });
+  return res.json();
+}
+
+async function graphGet(endpoint, params = {}) {
+  const url = new URL(`${GRAPH_BASE}${endpoint}`);
+  Object.entries({ ...params, access_token: IG_TOKEN }).forEach(([k, v]) =>
+    url.searchParams.set(k, v)
+  );
+  const res = await fetch(url.toString());
+  return res.json();
+}
+
 const server = new Server(
   { name: 'instagram', version: '0.1.0' },
   { capabilities: { tools: {} } }
@@ -90,48 +112,66 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   const { name, arguments: args } = req.params;
 
   if (name === 'create_post') {
-    // === REPLACE WITH REAL INSTAGRAM GRAPH API CALL ===
-    // 1. POST /{ig-user-id}/media           (creates container)
-    // 2. POST /{ig-user-id}/media_publish   (publishes container)
-    const post_id = `stub_${Date.now()}`;
+    if (!IG_TOKEN || !IG_USER_ID) {
+      throw new Error('IG_ACCESS_TOKEN and IG_USER_ID must be set in environment.');
+    }
+
+    // Step 1 — create media container
+    const container = await graphPost(`/${IG_USER_ID}/media`, {
+      image_url: args.image_url,
+      caption:   args.caption,
+    });
+    if (!container.id) {
+      throw new Error(`Container creation failed: ${JSON.stringify(container)}`);
+    }
+
+    // Step 2 — publish the container
+    const published = await graphPost(`/${IG_USER_ID}/media_publish`, {
+      creation_id: container.id,
+    });
+    if (!published.id) {
+      throw new Error(`Publish failed: ${JSON.stringify(published)}`);
+    }
+
     return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({
-            post_id,
-            note: 'STUB: no real post was published. Replace stub in ig-mcp-server.js.',
-            caption_preview: String(args.caption).slice(0, 80),
-          }),
-        },
-      ],
+      content: [{ type: 'text', text: JSON.stringify({ post_id: published.id }) }],
     };
   }
 
   if (name === 'get_post_metrics') {
-    // === REPLACE WITH REAL INSTAGRAM GRAPH API CALL ===
-    // GET /{media-id}/insights?metric=likes,comments,reach,saved
-    const file = path.join(METRICS_DIR, `${args.post_id}.json`);
-    try {
-      const data = await fs.readFile(file, 'utf8');
-      return { content: [{ type: 'text', text: data }] };
-    } catch {
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({
-              post_id: args.post_id,
-              likes: 0,
-              comments: 0,
-              reach: 0,
-              saves: 0,
-              note: `STUB: no metrics file found at ${file}. Drop a JSON there to simulate.`,
-            }),
-          },
-        ],
-      };
+    if (!IG_TOKEN) {
+      throw new Error('IG_ACCESS_TOKEN must be set in environment.');
     }
+
+    // Fetch likes + comments count from the media object
+    const media = await graphGet(`/${args.post_id}`, {
+      fields: 'like_count,comments_count',
+    });
+
+    // Fetch reach + saves from insights
+    const insights = await graphGet(`/${args.post_id}/insights`, {
+      metric: 'reach,saved',
+    });
+
+    const getValue = (metric) =>
+      insights?.data?.find((d) => d.name === metric)?.values?.[0]?.value ?? 0;
+
+    const result = {
+      post_id:  args.post_id,
+      likes:    media.like_count    ?? 0,
+      comments: media.comments_count ?? 0,
+      reach:    getValue('reach'),
+      saves:    getValue('saved'),
+    };
+
+    // Also cache to local metrics file for the reviewer agent
+    await fs.mkdir(METRICS_DIR, { recursive: true });
+    await fs.writeFile(
+      path.join(METRICS_DIR, `${args.post_id}.json`),
+      JSON.stringify(result, null, 2)
+    );
+
+    return { content: [{ type: 'text', text: JSON.stringify(result) }] };
   }
 
   if (name === 'canva_fill_template') {
