@@ -22,7 +22,7 @@ const LH3_REGEX = /https:\/\/lh3\.googleusercontent\.com\/[^\s"'\\,)>]*/g;
 
 const USED_IMAGES_FILE = path.join(REPO_ROOT, 'instagram', 'used-images.json');
 
-async function loadUsedImages() {
+export async function loadUsedImages() {
   try {
     const data = await fs.readFile(USED_IMAGES_FILE, 'utf8');
     return new Set(JSON.parse(data));
@@ -31,7 +31,7 @@ async function loadUsedImages() {
   }
 }
 
-async function saveUsedImages(set) {
+export async function saveUsedImages(set) {
   await fs.writeFile(USED_IMAGES_FILE, JSON.stringify([...set], null, 2));
 }
 
