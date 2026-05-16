@@ -14,7 +14,9 @@
     "publish": "node agents/publisher.js",
     "review": "node agents/reviewer.js",
     "canva-auth": "node canva-auth.js",
-    "canva-list": "node canva-list-templates.js"
+    "canva-list": "node canva-list-templates.js",
+    "google-photos-auth": "node google-photos-auth.js",
+    "google-photos": "node agents/google-photos.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",

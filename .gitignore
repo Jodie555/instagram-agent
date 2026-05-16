@@ -11,8 +11,28 @@ tools/node_modules/
 # Canva OAuth tokens (never commit secrets)
 tools/.canva-tokens.json
 
+# Google OAuth tokens (never commit secrets)
+tools/.google-tokens.json
+
+# Any stray token/credential files
+*.tokens.json
+*-tokens.json
+credentials.json
+
 # VS Code local settings (keep mcp.json and chatmodes tracked)
 .vscode/settings.json
+
+# Visual Studio local folder
+.vs/
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Instagram metrics cache (keep folder via .gitkeep)
+instagram/metrics/*
+!instagram/metrics/.gitkeep
 
 # Local setup files — contain credentials, never commit
 setup-claude-desktop.ps1
