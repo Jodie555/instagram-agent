@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" agent="GitHub Copilot">
+<mxfile host="app.diagrams.net" agent="GitHub Copilot" modified="2026-05-12">
   <diagram name="Instagram Agent Workflow" id="instagram-agent-workflow">
     <mxGraphModel dx="1671" dy="1096" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
@@ -75,6 +75,327 @@
         <mxCell id="leg4" parent="1" style="text;html=1;fontSize=11;fontColor=#d6b656;" value="Feedback loop" vertex="1">
           <mxGeometry height="20" width="120" x="940" y="330" as="geometry" />
         </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="Program Structure" id="program-structure">
+    <mxGraphModel dx="1800" dy="1100" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="ps-title" value="Instagram Agent — Program Structure" vertex="1" parent="1"
+          style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=18;fontStyle=1;verticalAlign=middle;">
+          <mxGeometry x="250" y="15" width="700" height="35" as="geometry" />
+        </mxCell>
+
+        <!-- Column headers -->
+        <mxCell id="ps-h-steps" value="PIPELINE STEPS" vertex="1" parent="1"
+          style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=center;fontSize=10;fontStyle=1;fontColor=#333333;rounded=1;">
+          <mxGeometry x="30" y="158" width="140" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-h-agents" value="AGENTS / MODULES" vertex="1" parent="1"
+          style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=center;fontSize=10;fontStyle=1;fontColor=#333333;rounded=1;">
+          <mxGeometry x="200" y="158" width="190" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-h-libs" value="SHARED LIBS" vertex="1" parent="1"
+          style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=center;fontSize=10;fontStyle=1;fontColor=#333333;rounded=1;">
+          <mxGeometry x="420" y="158" width="170" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-h-ext" value="EXTERNAL SERVICES" vertex="1" parent="1"
+          style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=center;fontSize=10;fontStyle=1;fontColor=#333333;rounded=1;">
+          <mxGeometry x="620" y="158" width="190" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-h-skills" value="SKILLS / PROMPTS" vertex="1" parent="1"
+          style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=center;fontSize=10;fontStyle=1;fontColor=#333333;rounded=1;">
+          <mxGeometry x="840" y="158" width="210" height="24" as="geometry" />
+        </mxCell>
+
+        <!-- ENTRY POINTS -->
+        <mxCell id="ps-entry-label" value="ENTRY POINTS" vertex="1" parent="1"
+          style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=center;fontSize=10;fontStyle=1;fontColor=#333333;rounded=1;">
+          <mxGeometry x="30" y="72" width="140" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-autopipeline" value="&lt;b&gt;auto-pipeline.js&lt;/b&gt;&lt;br&gt;CLI Orchestrator (5 steps)" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;arcSize=10;">
+          <mxGeometry x="200" y="68" width="190" height="46" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-mcp" value="&lt;b&gt;ig-mcp-server.js&lt;/b&gt;&lt;br&gt;MCP Server / Claude Desktop" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;arcSize=10;">
+          <mxGeometry x="620" y="68" width="190" height="46" as="geometry" />
+        </mxCell>
+
+        <!-- STEP 1: OPTIMIZE -->
+        <mxCell id="ps-step1" value="&lt;b&gt;① Optimize&lt;/b&gt;" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;arcSize=10;">
+          <mxGeometry x="30" y="200" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-optimizer" value="&lt;b&gt;optimizer.js&lt;/b&gt;&lt;br&gt;3-round create→critique→revise" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;arcSize=10;">
+          <mxGeometry x="200" y="195" width="190" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-llm" value="&lt;b&gt;llm.js&lt;/b&gt;&lt;br&gt;GitHub Models / OpenAI / Anthropic" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;arcSize=10;">
+          <mxGeometry x="420" y="195" width="170" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-llm-api" value="&lt;b&gt;LLM API&lt;/b&gt;&lt;br&gt;GitHub Models / OpenAI / Claude" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;arcSize=10;">
+          <mxGeometry x="620" y="195" width="190" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-skill-optimizer" value="&lt;b&gt;ig-optimizer/SKILL.md&lt;/b&gt;&lt;br&gt;3-round loop system prompt" vertex="1" parent="1"
+          style="shape=document;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;">
+          <mxGeometry x="840" y="195" width="210" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-skill-creator" value="&lt;b&gt;ig-creator/SKILL.md&lt;/b&gt;&lt;br&gt;Draft post prompt" vertex="1" parent="1"
+          style="shape=document;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;">
+          <mxGeometry x="840" y="255" width="210" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- STEP 1b: IMAGE SOURCE -->
+        <mxCell id="ps-step1b" value="&lt;b&gt;①b Image Source&lt;/b&gt;&lt;br&gt;&lt;i&gt;(optional)&lt;/i&gt;" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;arcSize=10;">
+          <mxGeometry x="30" y="285" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-img-agents" value="&lt;b&gt;google-photos-album.js&lt;/b&gt; (scraper)&lt;br&gt;&lt;b&gt;google-photos.js&lt;/b&gt; (OAuth API)&lt;br&gt;&lt;i&gt;or --image &amp;lt;url&amp;gt; flag&lt;/i&gt;" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;arcSize=10;">
+          <mxGeometry x="200" y="280" width="190" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-google-photos" value="&lt;b&gt;Google Photos&lt;/b&gt;&lt;br&gt;Shared album / Photos API" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;arcSize=10;">
+          <mxGeometry x="620" y="285" width="190" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- STEP 2: DESIGN -->
+        <mxCell id="ps-step2" value="&lt;b&gt;② Design&lt;/b&gt;&lt;br&gt;&lt;i&gt;(optional)&lt;/i&gt;" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;arcSize=10;">
+          <mxGeometry x="30" y="378" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-canva-designer" value="&lt;b&gt;canva-designer.js&lt;/b&gt;&lt;br&gt;Extract headline → fill template" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;arcSize=10;">
+          <mxGeometry x="200" y="373" width="190" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-canva-lib" value="&lt;b&gt;canva.js&lt;/b&gt;&lt;br&gt;fillTemplate + exportDesign" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;arcSize=10;">
+          <mxGeometry x="420" y="373" width="170" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-canva-api" value="&lt;b&gt;Canva Connect API&lt;/b&gt;&lt;br&gt;Fill template, export PNG" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;arcSize=10;">
+          <mxGeometry x="620" y="373" width="190" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- STEP 3: PUBLISH -->
+        <mxCell id="ps-step3" value="&lt;b&gt;③ Publish&lt;/b&gt;" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;arcSize=10;">
+          <mxGeometry x="30" y="461" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-publisher" value="&lt;b&gt;publisher.js&lt;/b&gt;&lt;br&gt;Create container → media_publish" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;arcSize=10;">
+          <mxGeometry x="200" y="456" width="190" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-ig-api" value="&lt;b&gt;Instagram Graph API&lt;/b&gt;&lt;br&gt;/{id}/media → /{id}/media_publish" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;arcSize=10;">
+          <mxGeometry x="620" y="456" width="190" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- STEP 4: WAIT -->
+        <mxCell id="ps-step4" value="&lt;b&gt;④ Wait for Metrics&lt;/b&gt;" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;arcSize=10;">
+          <mxGeometry x="30" y="541" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-wait" value="Polls &lt;i&gt;instagram/metrics/&amp;lt;post_id&amp;gt;.json&lt;/i&gt;&lt;br&gt;until file appears or timeout" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;arcSize=10;dashed=1;">
+          <mxGeometry x="200" y="536" width="190" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- STEP 5: REVIEW -->
+        <mxCell id="ps-step5" value="&lt;b&gt;⑤ Review&lt;/b&gt;" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;arcSize=10;">
+          <mxGeometry x="30" y="624" width="140" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-reviewer" value="&lt;b&gt;reviewer.js&lt;/b&gt;&lt;br&gt;Analyse metrics, append lessons" vertex="1" parent="1"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;arcSize=10;">
+          <mxGeometry x="200" y="619" width="190" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-skill-reviewer" value="&lt;b&gt;ig-reviewer/SKILL.md&lt;/b&gt;&lt;br&gt;Review &amp; lessons prompt" vertex="1" parent="1"
+          style="shape=document;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;">
+          <mxGeometry x="840" y="619" width="210" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- DATA STORES -->
+        <mxCell id="ps-h-data" value="DATA STORES" vertex="1" parent="1"
+          style="text;html=1;strokeColor=#666666;fillColor=#f5f5f5;align=center;fontSize=10;fontStyle=1;fontColor=#333333;rounded=1;">
+          <mxGeometry x="30" y="710" width="140" height="24" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-lessons" value="&lt;b&gt;instagram/lessons.md&lt;/b&gt;&lt;br&gt;Append-only shared memory" vertex="1" parent="1"
+          style="shape=document;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;">
+          <mxGeometry x="200" y="710" width="190" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-posts" value="&lt;b&gt;instagram/posts/&lt;/b&gt;&lt;br&gt;YYYY-MM-DD[-vN].md" vertex="1" parent="1"
+          style="shape=folder;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;tabWidth=190;tabHeight=0;">
+          <mxGeometry x="420" y="710" width="170" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-metrics" value="&lt;b&gt;instagram/metrics/&lt;/b&gt;&lt;br&gt;&lt;post_id&gt;.json" vertex="1" parent="1"
+          style="shape=folder;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;tabWidth=190;tabHeight=0;">
+          <mxGeometry x="620" y="710" width="190" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- LEGEND -->
+        <mxCell id="ps-leg-title" value="Legend" vertex="1" parent="1"
+          style="text;html=1;fontStyle=1;fontSize=12;strokeColor=none;fillColor=none;">
+          <mxGeometry x="1080" y="195" width="80" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-leg1" value="Orchestrator / Step" vertex="1" parent="1"
+          style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;">
+          <mxGeometry x="1080" y="225" width="150" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-leg2" value="Agent / Module" vertex="1" parent="1"
+          style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;">
+          <mxGeometry x="1080" y="263" width="150" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-leg3" value="Shared Library" vertex="1" parent="1"
+          style="rounded=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=10;">
+          <mxGeometry x="1080" y="301" width="150" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-leg4" value="External Service / API" vertex="1" parent="1"
+          style="rounded=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;">
+          <mxGeometry x="1080" y="339" width="150" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-leg5" value="Skill / Prompt File" vertex="1" parent="1"
+          style="shape=document;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;">
+          <mxGeometry x="1080" y="377" width="150" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-leg6" value="Data File / Folder" vertex="1" parent="1"
+          style="shape=document;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;">
+          <mxGeometry x="1080" y="415" width="150" height="28" as="geometry" />
+        </mxCell>
+
+        <!-- EDGES: Entry → Steps -->
+        <mxCell id="ps-e-auto-s1" edge="1" parent="1" source="ps-autopipeline" target="ps-step1"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;fontSize=10;" value="runs">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- EDGES: Step flow -->
+        <mxCell id="ps-e-s1-s1b" edge="1" parent="1" source="ps-step1" target="ps-step1b"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-s1b-s2" edge="1" parent="1" source="ps-step1b" target="ps-step2"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-s2-s3" edge="1" parent="1" source="ps-step2" target="ps-step3"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-s3-s4" edge="1" parent="1" source="ps-step3" target="ps-step4"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-s4-s5" edge="1" parent="1" source="ps-step4" target="ps-step5"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- EDGES: Steps → Agents -->
+        <mxCell id="ps-e-s1-opt" edge="1" parent="1" source="ps-step1" target="ps-optimizer"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82b366;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-s1b-img" edge="1" parent="1" source="ps-step1b" target="ps-img-agents"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82b366;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-s2-cd" edge="1" parent="1" source="ps-step2" target="ps-canva-designer"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82b366;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-s3-pub" edge="1" parent="1" source="ps-step3" target="ps-publisher"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82b366;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-s5-rev" edge="1" parent="1" source="ps-step5" target="ps-reviewer"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82b366;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- EDGES: Agents → Libs -->
+        <mxCell id="ps-e-opt-llm" edge="1" parent="1" source="ps-optimizer" target="ps-llm"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d79b00;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-rev-llm" edge="1" parent="1" source="ps-reviewer" target="ps-llm"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d79b00;" value="uses">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-cd-clib" edge="1" parent="1" source="ps-canva-designer" target="ps-canva-lib"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d79b00;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- EDGES: Libs → External -->
+        <mxCell id="ps-e-llm-api" edge="1" parent="1" source="ps-llm" target="ps-llm-api"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#b85450;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-img-gp" edge="1" parent="1" source="ps-img-agents" target="ps-google-photos"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#b85450;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-clib-capi" edge="1" parent="1" source="ps-canva-lib" target="ps-canva-api"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#b85450;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-pub-ig" edge="1" parent="1" source="ps-publisher" target="ps-ig-api"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#b85450;" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-mcp-ig" edge="1" parent="1" source="ps-mcp" target="ps-ig-api"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#b85450;" value="MCP tools">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- EDGES: Skills → Agents/LLM (dashed) -->
+        <mxCell id="ps-e-sk-opt" edge="1" parent="1" source="ps-skill-optimizer" target="ps-llm"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673a6;dashed=1;fontSize=10;" value="system prompt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-sk-creator" edge="1" parent="1" source="ps-skill-creator" target="ps-llm"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673a6;dashed=1;fontSize=10;" value="system prompt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-sk-rev" edge="1" parent="1" source="ps-skill-reviewer" target="ps-reviewer"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673a6;dashed=1;fontSize=10;" value="system prompt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- EDGES: Agents ↔ Data stores -->
+        <mxCell id="ps-e-opt-lessons-r" edge="1" parent="1" source="ps-optimizer" target="ps-lessons"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d6b656;dashed=1;fontSize=10;" value="reads">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-opt-posts-w" edge="1" parent="1" source="ps-optimizer" target="ps-posts"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d6b656;fontSize=10;" value="writes draft">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-pub-posts-r" edge="1" parent="1" source="ps-publisher" target="ps-posts"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d6b656;dashed=1;fontSize=10;" value="reads">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-wait-metrics" edge="1" parent="1" source="ps-wait" target="ps-metrics"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d6b656;dashed=1;fontSize=10;" value="polls">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-rev-metrics-r" edge="1" parent="1" source="ps-reviewer" target="ps-metrics"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d6b656;dashed=1;fontSize=10;" value="reads">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ps-e-rev-lessons-w" edge="1" parent="1" source="ps-reviewer" target="ps-lessons"
+          style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d6b656;fontSize=10;" value="appends">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
       </root>
     </mxGraphModel>
   </diagram>

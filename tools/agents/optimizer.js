@@ -56,6 +56,13 @@ export async function runOptimizer(topic, { save = true } = {}) {
 
   const finalDraft = extractFinalDraft(fullText);
 
+  if (!finalDraft.match(/##\s*Caption/i)) {
+    throw new Error(
+      `Optimizer output does not contain a valid post (no ## Caption section found).\n` +
+      `Claude response preview:\n${fullText.slice(0, 500)}`
+    );
+  }
+
   let savedPath = null;
   if (save) {
     const date = todayISO();

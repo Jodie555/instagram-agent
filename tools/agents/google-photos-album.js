@@ -9,12 +9,31 @@
  * so Instagram can fetch them at a usable resolution.
  *
  * Exported helpers:
- *   getAlbumImageUrls(shareUrl, n)  — first n image URLs from a shared album
- *   getLatestAlbumImageUrl(shareUrl) — the first (most recent) image URL
+ *   getAlbumImageUrls(shareUrl, n)       — first n image URLs from a shared album
+ *   getLatestAlbumImageUrl(shareUrl)     — next UNUSED image from the album (round-robins through all photos)
  */
+
+import path from 'node:path';
+import { promises as fs } from 'node:fs';
+import { REPO_ROOT } from './llm.js';
 
 // Match full lh3 URLs — stop at any quote, whitespace, backslash or JSON terminator
 const LH3_REGEX = /https:\/\/lh3\.googleusercontent\.com\/[^\s"'\\,)>]*/g;
+
+const USED_IMAGES_FILE = path.join(REPO_ROOT, 'instagram', 'used-images.json');
+
+async function loadUsedImages() {
+  try {
+    const data = await fs.readFile(USED_IMAGES_FILE, 'utf8');
+    return new Set(JSON.parse(data));
+  } catch {
+    return new Set();
+  }
+}
+
+async function saveUsedImages(set) {
+  await fs.writeFile(USED_IMAGES_FILE, JSON.stringify([...set], null, 2));
+}
 
 /**
  * Append Google's image-serving size parameter.
@@ -88,14 +107,38 @@ export async function getAlbumImageUrls(shareUrl, n = Infinity) {
 }
 
 /**
- * Returns the URL of the first (most recently added) photo in the shared album.
+ * Returns the next unused photo from the shared album.
+ * Tracks used image base-URLs in instagram/used-images.json so each run
+ * picks a different photo. Once all photos are used, the tracking resets.
  *
  * @param {string} shareUrl
  * @returns {Promise<string>}
  */
 export async function getLatestAlbumImageUrl(shareUrl) {
-  const urls = await getAlbumImageUrls(shareUrl, 1);
-  return urls[0];
+  const allUrls = await getAlbumImageUrls(shareUrl);
+  const used = await loadUsedImages();
+
+  // Strip size params to get base URLs for comparison
+  const basesToSized = new Map(allUrls.map((u) => [u.split('=')[0], u]));
+  const unused = [...basesToSized.entries()].filter(([base]) => !used.has(base));
+
+  let chosen;
+  if (unused.length > 0) {
+    // Pick the first unused image
+    chosen = unused[0];
+  } else {
+    // All photos used — reset and start over
+    console.log('[google-photos-album] All album images have been used. Resetting.');
+    used.clear();
+    chosen = [...basesToSized.entries()][0];
+  }
+
+  const [base, sizedUrl] = chosen;
+  used.add(base);
+  await saveUsedImages(used);
+
+  console.log(`[google-photos-album] Picked image (${basesToSized.size - unused.length + 1}/${basesToSized.size} used): ${sizedUrl}`);
+  return sizedUrl;
 }
 
 // ─── CLI usage ────────────────────────────────────────────────────────────────

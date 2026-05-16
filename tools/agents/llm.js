@@ -89,12 +89,12 @@ export async function writeRepoFile(relPath, content) {
  * Call the configured LLM with a system prompt + user message.
  * Returns the text response string.
  */
-export async function callClaude({ system, user, maxTokens = 8000, model = DEFAULT_MODEL }) {
+export async function callClaude({ system, user, images = [], maxTokens = 8000, model = DEFAULT_MODEL }) {
   if (BACKEND === 'github' || BACKEND === 'openai') {
-    return callOpenAICompat({ system, user, maxTokens, model });
+    return callOpenAICompat({ system, user, images, maxTokens, model });
   }
   if (BACKEND === 'anthropic') {
-    return callAnthropic({ system, user, maxTokens, model });
+    return callAnthropic({ system, user, images, maxTokens, model });
   }
   throw new Error(
     'No LLM backend configured. Set GITHUB_TOKEN, OPENAI_API_KEY, or ANTHROPIC_API_KEY.'
@@ -103,7 +103,7 @@ export async function callClaude({ system, user, maxTokens = 8000, model = DEFAU
 
 // ── GitHub Models / OpenAI backend ───────────────────────────────────────────
 
-async function callOpenAICompat({ system, user, maxTokens, model }) {
+async function callOpenAICompat({ system, user, images, maxTokens, model }) {
   const { default: OpenAI } = await import('openai');
 
   const baseURL =
@@ -116,12 +116,19 @@ async function callOpenAICompat({ system, user, maxTokens, model }) {
 
   const client = new OpenAI({ baseURL, apiKey });
 
+  const userContent = images.length
+    ? [
+        ...images.map((url) => ({ type: 'image_url', image_url: { url, detail: 'low' } })),
+        { type: 'text', text: user },
+      ]
+    : user;
+
   const resp = await client.chat.completions.create({
     model,
     max_tokens: maxTokens,
     messages: [
       { role: 'system', content: system },
-      { role: 'user', content: user },
+      { role: 'user', content: userContent },
     ],
   });
 
@@ -130,15 +137,22 @@ async function callOpenAICompat({ system, user, maxTokens, model }) {
 
 // ── Anthropic backend ─────────────────────────────────────────────────────────
 
-async function callAnthropic({ system, user, maxTokens, model }) {
+async function callAnthropic({ system, user, images, maxTokens, model }) {
   const { default: Anthropic } = await import('@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+  const userContent = images.length
+    ? [
+        ...images.map((url) => ({ type: 'image', source: { type: 'url', url } })),
+        { type: 'text', text: user },
+      ]
+    : user;
 
   const resp = await client.messages.create({
     model,
     max_tokens: maxTokens,
     system,
-    messages: [{ role: 'user', content: user }],
+    messages: [{ role: 'user', content: userContent }],
   });
   return resp.content
     .filter((b) => b.type === 'text')

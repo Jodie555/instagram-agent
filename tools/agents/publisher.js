@@ -100,6 +100,12 @@ export async function publishPost({ postFile, imageUrl = 'https://example.com/pl
   const md = await readRepoFile(postFile);
   if (!md) throw new Error(`Post file not found: ${postFile}`);
 
+  // Prevent re-publishing a post that already has a real (non-stub) post_id.
+  const existingId = md.match(/\*\*post_id:\*\*\s*`([^`]+)`/);
+  if (existingId && !existingId[1].startsWith('stub_')) {
+    throw new Error(`Post ${postFile} was already published (post_id: ${existingId[1]}). Delete the Published block to force re-publish.`);
+  }
+
   const { fullCaption } = parsePostMarkdown(md);
   if (!fullCaption) throw new Error(`No caption found in ${postFile}`);
 
