@@ -17,6 +17,12 @@
  * VS Code launches it automatically via .vscode/mcp.json.
  */
 
+// MCP uses stdout for JSON-RPC messages. Any stray console.log would corrupt
+// the protocol stream and cause Claude Desktop to disconnect with a
+// "not valid JSON" error. Redirect all stdout logging to stderr.
+console.log = (...args) => console.error(...args);
+console.info = (...args) => console.error(...args);
+
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import {
@@ -26,6 +32,10 @@ import {
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fillTemplate, exportDesign } from './agents/canva.js';
+import { runOptimizer }  from './agents/optimizer.js';
+import { publishPost }   from './agents/publisher.js';
+import { runReviewer }   from './agents/reviewer.js';
+import { designPost }    from './agents/canva-designer.js';
 
 const ROOT = process.env.IG_DATA_DIR
   || path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\//, '')), '..', 'instagram');
@@ -103,6 +113,52 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           design_id: { type: 'string', description: 'Design id returned by canva_fill_template' },
         },
         required: ['design_id'],
+      },
+    },
+    // ── Per-agent tools ─────────────────────────────────────────────────────
+    {
+      name: 'optimize_post',
+      description: 'Run the 3-round optimizer loop to draft the best post for a topic. Returns the saved post file path.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          topic: { type: 'string', description: 'Subject or theme for the Instagram post' },
+        },
+        required: ['topic'],
+      },
+    },
+    {
+      name: 'design_post',
+      description: 'Auto-fill a Canva template using a saved post draft and return a public image URL. Requires CANVA_* env vars.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          post_file: { type: 'string', description: 'Repo-relative path to the post markdown file, e.g. instagram/posts/2026-05-20.md' },
+        },
+        required: ['post_file'],
+      },
+    },
+    {
+      name: 'publish_post',
+      description: 'Publish a post draft to Instagram. Returns the post_id.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          post_file: { type: 'string', description: 'Repo-relative path to the post markdown file' },
+          image_url: { type: 'string', description: 'Public image URL to attach (required by Instagram Graph API)' },
+        },
+        required: ['post_file'],
+      },
+    },
+    {
+      name: 'review_post',
+      description: 'Read metrics for a published post and append new lessons to instagram/lessons.md.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          post_id: { type: 'string', description: 'Instagram post id (must have a matching instagram/metrics/<post_id>.json file)' },
+        },
+        required: ['post_id'],
       },
     },
   ],
@@ -185,6 +241,26 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   if (name === 'canva_export') {
     const imageUrl = await exportDesign(args.design_id);
     return { content: [{ type: 'text', text: JSON.stringify({ image_url: imageUrl }) }] };
+  }
+
+  if (name === 'optimize_post') {
+    const { savedPath } = await runOptimizer(args.topic);
+    return { content: [{ type: 'text', text: JSON.stringify({ post_file: savedPath }) }] };
+  }
+
+  if (name === 'design_post') {
+    const imageUrl = await designPost(args.post_file);
+    return { content: [{ type: 'text', text: JSON.stringify({ image_url: imageUrl }) }] };
+  }
+
+  if (name === 'publish_post') {
+    const result = await publishPost({ postFile: args.post_file, imageUrl: args.image_url });
+    return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+  }
+
+  if (name === 'review_post') {
+    await runReviewer(args.post_id);
+    return { content: [{ type: 'text', text: JSON.stringify({ reviewed: true, post_id: args.post_id }) }] };
   }
 
   throw new Error(`Unknown tool: ${name}`);

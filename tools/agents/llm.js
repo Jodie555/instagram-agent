@@ -19,7 +19,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(__dirname, '..', '..');
 
 // Load .env from repo root (silently ignored if file doesn't exist)
-dotenvConfig({ path: path.join(REPO_ROOT, '.env') });
+// quiet: true prevents dotenv from printing its banner to stdout, which would
+// corrupt the JSON-RPC channel when this module is used inside an MCP server.
+dotenvConfig({ path: path.join(REPO_ROOT, '.env'), quiet: true });
 
 // ── Backend detection ────────────────────────────────────────────────────────
 
@@ -37,7 +39,7 @@ if (!BACKEND) {
   );
 }
 
-console.log(`[llm] Using backend: ${BACKEND ?? 'none'}`);
+console.error(`[llm] Using backend: ${BACKEND ?? 'none'}`);
 
 // ── Model defaults ───────────────────────────────────────────────────────────
 

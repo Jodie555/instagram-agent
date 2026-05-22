@@ -1,0 +1,59 @@
+services:
+
+  # ── One-shot pipeline (optimize → design → publish → review) ─────────────
+  # Usage:
+  #   docker compose run --rm pipeline "Japan" --google-album-url "https://..."
+  #   docker compose run --rm pipeline "Japan" --skip-design --skip-publish
+  pipeline:
+    build: .
+    env_file: .env
+    volumes:
+      - ./instagram:/app/instagram
+    profiles:
+      - run
+
+  # ── Individual agent steps (call any step in isolation) ──────────────────
+  # Usage:
+  #   docker compose run --rm optimizer "Japan"
+  #   docker compose run --rm publisher instagram/posts/2026-05-20.md https://...
+  #   docker compose run --rm reviewer <post_id>
+  optimizer:
+    build: .
+    entrypoint: ["node", "tools/agents/optimizer.js"]
+    env_file: .env
+    volumes:
+      - ./instagram:/app/instagram
+    profiles:
+      - run
+
+  publisher:
+    build: .
+    entrypoint: ["node", "tools/agents/publisher.js"]
+    env_file: .env
+    volumes:
+      - ./instagram:/app/instagram
+    profiles:
+      - run
+
+  reviewer:
+    build: .
+    entrypoint: ["node", "tools/agents/reviewer.js"]
+    env_file: .env
+    volumes:
+      - ./instagram:/app/instagram
+    profiles:
+      - run
+
+  # ── MCP server (VS Code / Claude Desktop connects to this) ───────────────
+  # The MCP server uses stdio transport, so run it via:
+  #   docker compose run --rm mcp
+  # Or configure VS Code mcp.json to launch it:
+  #   "command": "docker", "args": ["compose", "run", "--rm", "mcp"]
+  mcp:
+    build: .
+    entrypoint: ["node", "tools/ig-mcp-server.js"]
+    env_file: .env
+    volumes:
+      - ./instagram:/app/instagram
+    stdin_open: true
+    tty: false
