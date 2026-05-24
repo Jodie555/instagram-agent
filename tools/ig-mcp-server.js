@@ -36,6 +36,9 @@ import { runOptimizer }  from './agents/optimizer.js';
 import { publishPost }   from './agents/publisher.js';
 import { runReviewer }   from './agents/reviewer.js';
 import { designPost }    from './agents/canva-designer.js';
+import { getLatestPhotoUrl, getAlbumPhotoUrls } from './agents/google-photos.js';
+import { pickBestPhoto } from './agents/photo-picker.js';
+import { REPO_ROOT }     from './agents/llm.js';
 
 const ROOT = process.env.IG_DATA_DIR
   || path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\//, '')), '..', 'instagram');
@@ -161,8 +164,64 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         required: ['post_id'],
       },
     },
+    // ── Photo source tools ──────────────────────────────────────────────────
+    {
+      name: 'pick_photo_from_album',
+      description: 'Pick the best photo from a Google Photos shared album using GPT-4o vision. Returns a full-resolution image URL.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          share_url:  { type: 'string', description: 'photos.app.goo.gl or photos.google.com/share URL' },
+          max_photos: { type: 'number', description: 'Max candidates to send to the LLM (default 10)' },
+        },
+        required: ['share_url'],
+      },
+    },
+    {
+      name: 'get_latest_google_photo',
+      description: 'Fetch the URL of the most recent photo from the authenticated Google Photos library. Requires google-photos-auth.js to have been run.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          album_id: { type: 'string', description: 'Optional album id; if set, returns the latest photo from that album instead of the full library.' },
+        },
+      },
+    },
+    // ── End-to-end pipeline ─────────────────────────────────────────────────
+    {
+      name: 'auto_pipeline',
+      description: 'Run the full optimize → (photo pick) → design → publish → review pipeline in one call. Mirrors tools/auto-pipeline.js.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          topic:             { type: 'string',  description: 'Subject or theme for the post' },
+          image_url:         { type: 'string',  description: 'Optional preselected public image URL (skips photo selection)' },
+          google_album_url:  { type: 'string',  description: 'Optional Google Photos shared album URL — best photo will be picked via GPT-4o vision' },
+          google_photo:      { type: 'string',  description: 'Optional Google Photos API source: "latest" or "album:<albumId>"' },
+          max_photos:        { type: 'number',  description: 'Max album candidates for the picker (default 10)' },
+          wait_hours:        { type: 'number',  description: 'Hours to poll for metrics before giving up (default 0 = single check)' },
+          poll_seconds:      { type: 'number',  description: 'Metrics poll interval in seconds (default 30)' },
+          skip_design:       { type: 'boolean', description: 'Skip the Canva design step' },
+          skip_publish:      { type: 'boolean', description: 'Stop after the draft (no publish, no review)' },
+          skip_review:       { type: 'boolean', description: 'Stop after publish (no metrics wait, no review)' },
+        },
+        required: ['topic'],
+      },
+    },
   ],
 }));
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function waitForMetrics(postId, { waitHours, pollSeconds }) {
+  const file = path.join(REPO_ROOT, 'instagram', 'metrics', `${postId}.json`);
+  const deadline = Date.now() + waitHours * 3600 * 1000;
+  while (true) {
+    try { await fs.access(file); return file; } catch {}
+    if (Date.now() >= deadline) return null;
+    await sleep(pollSeconds * 1000);
+  }
+}
 
 server.setRequestHandler(CallToolRequestSchema, async (req) => {
   const { name, arguments: args } = req.params;
@@ -261,6 +320,84 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   if (name === 'review_post') {
     await runReviewer(args.post_id);
     return { content: [{ type: 'text', text: JSON.stringify({ reviewed: true, post_id: args.post_id }) }] };
+  }
+
+  if (name === 'pick_photo_from_album') {
+    const imageUrl = await pickBestPhoto(args.share_url, { maxPhotos: args.max_photos ?? 10 });
+    return { content: [{ type: 'text', text: JSON.stringify({ image_url: imageUrl }) }] };
+  }
+
+  if (name === 'get_latest_google_photo') {
+    let imageUrl;
+    if (args.album_id) {
+      const urls = await getAlbumPhotoUrls(args.album_id, 1);
+      imageUrl = urls[0];
+    } else {
+      imageUrl = await getLatestPhotoUrl();
+    }
+    return { content: [{ type: 'text', text: JSON.stringify({ image_url: imageUrl }) }] };
+  }
+
+  if (name === 'auto_pipeline') {
+    const log = (m) => console.error(`[pipeline] ${m}`);
+    const {
+      topic, image_url, google_album_url, google_photo,
+      max_photos = 10, wait_hours = 0, poll_seconds = 30,
+      skip_design = false, skip_publish = false, skip_review = false,
+    } = args;
+
+    if (!topic) throw new Error('topic is required');
+
+    log('Step 1: optimize');
+    const { savedPath } = await runOptimizer(topic);
+
+    let imageUrl = image_url;
+
+    if (!imageUrl && google_album_url) {
+      log('Step 1b: pick best photo from Google Photos album');
+      try {
+        imageUrl = await pickBestPhoto(google_album_url, { maxPhotos: max_photos });
+      } catch (e) { log(`photo picker failed: ${e.message}`); }
+    }
+
+    if (!imageUrl && google_photo) {
+      log('Step 1b: fetch from Google Photos API');
+      try {
+        if (google_photo === 'latest') imageUrl = await getLatestPhotoUrl();
+        else if (google_photo.startsWith('album:')) {
+          const urls = await getAlbumPhotoUrls(google_photo.slice('album:'.length), 1);
+          imageUrl = urls[0];
+        }
+      } catch (e) { log(`Google Photos fetch failed: ${e.message}`); }
+    }
+
+    if (!skip_design && !imageUrl && process.env.CANVA_CLIENT_ID && process.env.CANVA_TEMPLATE_ID) {
+      log('Step 2: Canva design');
+      try { imageUrl = await designPost(savedPath); }
+      catch (e) { log(`Canva design failed: ${e.message}`); }
+    }
+
+    if (skip_publish) {
+      return { content: [{ type: 'text', text: JSON.stringify({ post_file: savedPath, image_url: imageUrl, stopped_after: 'draft' }) }] };
+    }
+
+    log('Step 3: publish');
+    const { post_id } = await publishPost({ postFile: savedPath, imageUrl });
+
+    if (skip_review) {
+      return { content: [{ type: 'text', text: JSON.stringify({ post_file: savedPath, image_url: imageUrl, post_id, stopped_after: 'publish' }) }] };
+    }
+
+    log('Step 4: wait for metrics');
+    const metricsFile = await waitForMetrics(post_id, { waitHours: wait_hours, pollSeconds: poll_seconds });
+    if (!metricsFile) {
+      return { content: [{ type: 'text', text: JSON.stringify({ post_file: savedPath, image_url: imageUrl, post_id, stopped_after: 'no_metrics' }) }] };
+    }
+
+    log('Step 5: review');
+    await runReviewer(post_id);
+
+    return { content: [{ type: 'text', text: JSON.stringify({ post_file: savedPath, image_url: imageUrl, post_id, reviewed: true }) }] };
   }
 
   throw new Error(`Unknown tool: ${name}`);
