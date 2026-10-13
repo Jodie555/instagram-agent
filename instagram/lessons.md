@@ -1,21 +1,14 @@
 # Instagram Lessons Learned
 
-> Append-only. Newest entries at the bottom. Each bullet must include evidence.
+> Append-only. Newest entries at the bottom. Each bullet must include evidence (post_id + metric).
 
 <!-- Reviewer agent appends dated sections below this line -->
 
-## 2026-11-02 review
-- Ensure account permissions allow for full data access (e.g., reach, impressions, saves) to effectively analyze content performance.
-- Investigate the lack of initial engagement and consider adjustments to posting time or promotional strategies to ensure the content reaches the audience.
-```
-
-## 2026-11-03 review
-- Even with optimized posting times, additional promotional strategies (e.g., stories, cross-promotion) are necessary for improved reach and engagement (current reach: 2).
-- Experiment with alternative hooks or formats, such as carousel posts or reels, to diversify content delivery and catch attention.
-- Review the effectiveness and relevance of hashtags regularly; even with strategy, the current hashtag set generated minimal engagement.
-```
-
-## 2026-11-13 review
-- Verify account visibility settings and permissions to ensure posts are being served to the audience.
-- Conduct testing with alternative post formats (e.g., reels or stories) to increase visibility and engagement given the absence of interactions in this post.
-```
+<!--
+  2026-05-24 — file purged. The previous "2026-11-02", "2026-11-03", and
+  "2026-11-13" review sections were stub/placeholder data from system
+  bootstrap, not real reviewer output. They were being cited by post
+  drafts as if they were real lessons, creating a feedback loop on
+  fabricated history. The reviewer should only append entries after
+  running against a real published post_id with real metrics.
+-->

@@ -61,6 +61,20 @@ Call `mcp__instagram__auto_pipeline` with:
 ### Step 6 — Verify review passed
 `review_post` writes lessons to `instagram\lessons.md`. If `review_post` returned an error or a "do not publish" signal in the auto_pipeline result, **do not** re-publish. Log the failure in `post-log.md` and stop.
 
+Before accepting the draft caption, the agent must also run it through the **pre-publish checklist** below. Any failure → rewrite once. Second failure → log and stop.
+
+#### Pre-publish caption checklist (style-guide derived)
+
+Source: `instagram-playbook/photography_instagram_style_guide.docx`. The agent checks the draft caption against each:
+
+1. **Lane check:** Caption follows the long-form journalistic lane defined in `brand-voice.md` — has subject, place, sensory detail, and one piece of cultural/historical/seasonal context. No ultra-short emoji-led one-liners.
+2. **No template phrases:** Caption contains none of the forbidden phrases in `brand-voice.md`, and none of the following from the style guide: generic platitudes ("Beautiful day in…"), engagement-bait questions ("What do you think?"), or hashtag walls of 11+ tags.
+3. **Partner tags present (per A7):** Caption includes at least one location tag and, where applicable, one credit or partner tag (e.g. JNTO, regional tourism, photographer credit). Skip only if no relevant partner exists for the topic.
+4. **Visual move applied:** The image prompt or selected photo follows the repeatable visual move defined in `brand-voice.md` (single human-scale subject in lower-left/right third). Note in the post markdown if the image deviates and why.
+5. **Hashtag count:** Within the 5–10 range from `brand-voice.md`. If A5 (or A6+) graduates to Confirmed and shifts the target, update this number here.
+
+The reviewer (`review_post`) handles compliance and IG-policy checks; this checklist handles craft. Both must pass.
+
 ### Step 7 — Log the post (newest at top)
 Prepend a new entry to `post-log.md` using the exact format in §"post-log format" below.
 
@@ -73,7 +87,7 @@ Output a single line: `Posted at 9am — <post_id> — testing: <hypothesis> —
 2. **Never reuse a photo from the last 30 entries of `post-log.md`.** The pipeline also writes to `instagram\used-images.json` — treat that as the second guardrail.
 3. **If `publish_post` fails, log the error in `post-log.md` and stop the run.** No retries.
 4. **Voice and visual rules in `brand-voice.md` are non-negotiable.**
-5. **Hashtags: 5–10 total.** No more, no fewer.
+5. **Hashtags: 3–6 total** — 2–4 niche tags + 1–2 account/location tags. No mega-discovery hashtags. See `brand-voice.md` for the full rule (updated 2026-05-24).
 6. **Emojis: ≤2 in the caption body.** Hashtags don't count.
 7. **One post per scheduled run.** Even if the run is late, do not publish a backlog.
 
