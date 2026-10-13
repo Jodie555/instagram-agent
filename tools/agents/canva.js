@@ -14,6 +14,7 @@
 import './llm.js'; // loads .env before the constants below are read
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { fetchWithRetry } from './net.js';
 import { fileURLToPath } from 'node:url';
 
 const __dirname   = path.dirname(fileURLToPath(import.meta.url));
@@ -92,7 +93,10 @@ async function canvaFetch(method, path_, body) {
   };
   if (body !== undefined) opts.body = JSON.stringify(body);
 
-  const resp = await fetch(url, opts);
+  // Only GETs are retried: a repeated POST would start a second autofill/export job.
+  const resp = method === 'GET'
+    ? await fetchWithRetry(url, opts, { label: `Canva GET ${path_}` })
+    : await fetch(url, opts);
   if (!resp.ok) {
     throw new Error(`Canva API ${method} ${path_} failed (${resp.status}): ${await resp.text()}`);
   }

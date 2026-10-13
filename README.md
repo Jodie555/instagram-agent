@@ -153,6 +153,7 @@ See [`.env.example`](.env.example) for the full list. The main ones:
 | `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` | Use an API key instead of your subscription (required for Docker) |
 | `IG_GRAPH_VERSION` | Instagram API version (default `v24.0`) |
 | `CANVA_*` | Optional: put text on a Canva template instead of posting raw photos |
+| `ALERT_WEBHOOK_URL` | Optional: get a phone/chat alert when a run fails (ntfy.sh, Discord or Slack webhook) |
 
 **Usage:** each post takes a handful of AI calls, which count toward your Claude subscription's usage limits. With Haiku that's small.
 

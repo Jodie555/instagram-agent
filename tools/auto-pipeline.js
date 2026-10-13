@@ -32,6 +32,7 @@ import { designPost } from './agents/canva-designer.js';
 import { REPO_ROOT } from './agents/llm.js';
 import { getLatestPhotoUrl, getAlbumPhotoUrls } from './agents/google-photos.js';
 import { pickBestPhoto } from './agents/photo-picker.js';
+import { sendAlert } from './agents/notify.js';
 
 function parseArgs(argv) {
   const args = { topic: '', imageUrl: undefined, googlePhoto: undefined, googleAlbumUrl: process.env.GOOGLE_ALBUM_URL || undefined, waitHours: 0, pollSeconds: 30, maxPhotos: 10, skipDesign: false, skipPublish: false, skipReview: false };
@@ -101,6 +102,7 @@ async function main() {
       console.log(`[pipeline] Selected image URL: ${imageUrl}`);
     } catch (e) {
       console.warn(`[pipeline] Photo picker failed: ${e.message}. Continuing without image.`);
+      await sendAlert('Instagram pipeline: photo picker failed', e.message);
     }
   }
 
@@ -120,6 +122,7 @@ async function main() {
       if (imageUrl) console.log(`[pipeline] Google Photos URL: ${imageUrl}`);
     } catch (e) {
       console.warn(`[pipeline] Google Photos fetch failed: ${e.message}. Continuing without image.`);
+      await sendAlert('Instagram pipeline: Google Photos fetch failed', e.message);
     }
   }
 
@@ -131,6 +134,7 @@ async function main() {
         imageUrl = await designPost(savedPath);
       } catch (e) {
         console.warn(`[pipeline] Canva design failed (${e.message}). Continuing without image.`);
+        await sendAlert('Instagram pipeline: Canva design failed', e.message);
       }
     } else {
       console.log(`\n[pipeline] Step 2 skipped — set CANVA_CLIENT_ID + CANVA_TEMPLATE_ID to enable Canva design.`);
@@ -166,4 +170,8 @@ async function main() {
   console.log('\n[pipeline] Done.');
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch(async (e) => {
+  console.error(e);
+  await sendAlert('Instagram pipeline failed', e.message);
+  process.exit(1);
+});

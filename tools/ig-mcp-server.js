@@ -29,14 +29,15 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fillTemplate, exportDesign } from './agents/canva.js';
 import { runOptimizer }  from './agents/optimizer.js';
-import { publishPost }   from './agents/publisher.js';
+import { publishPost, publishImage } from './agents/publisher.js';
 import { runReviewer }   from './agents/reviewer.js';
 import { designPost }    from './agents/canva-designer.js';
 import { getLatestPhotoUrl, getAlbumPhotoUrls } from './agents/google-photos.js';
 import { pickBestPhoto } from './agents/photo-picker.js';
 import { markImageUsed } from './agents/google-photos-album.js';
 import { REPO_ROOT }     from './agents/llm.js';
-import { graphGet, graphPost } from './agents/graph.js';
+import { graphGet } from './agents/graph.js';
+import { sendAlert }   from './agents/notify.js';
 
 const ROOT = process.env.IG_DATA_DIR
   || path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\//, '')), '..', 'instagram');
@@ -201,7 +202,7 @@ async function waitForMetrics(postId, { waitHours, pollSeconds }) {
   }
 }
 
-server.setRequestHandler(CallToolRequestSchema, async (req) => {
+async function handleTool(req) {
   const { name, arguments: args } = req.params;
 
   if (name === 'create_post') {
@@ -209,26 +210,15 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       throw new Error('IG_ACCESS_TOKEN and IG_USER_ID must be set in environment.');
     }
 
-    // Step 1 — create media container
-    const container = await graphPost(`/${IG_USER_ID}/media`, {
-      image_url: args.image_url,
-      caption:   args.caption,
-    });
-    if (!container.id) {
-      throw new Error(`Container creation failed: ${JSON.stringify(container)}`);
-    }
-
-    // Step 2 — publish the container
-    const published = await graphPost(`/${IG_USER_ID}/media_publish`, {
-      creation_id: container.id,
-    });
-    if (!published.id) {
+    // Same create → wait → publish flow (with safe retries) as publish_post.
+    const published = await publishImage({ caption: args.caption, imageUrl: args.image_url });
+    if (!published.post_id) {
       throw new Error(`Publish failed: ${JSON.stringify(published)}`);
     }
     await markImageUsed(args.image_url);
 
     return {
-      content: [{ type: 'text', text: JSON.stringify({ post_id: published.id }) }],
+      content: [{ type: 'text', text: JSON.stringify({ post_id: published.post_id }) }],
     };
   }
 
@@ -348,7 +338,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       log('Step 1b: pick best photo from Google Photos album');
       try {
         imageUrl = await pickBestPhoto(google_album_url, { maxPhotos: max_photos });
-      } catch (e) { log(`photo picker failed: ${e.message}`); }
+      } catch (e) { log(`photo picker failed: ${e.message}`); await sendAlert('Instagram agent: photo picker failed', e.message); }
     }
 
     if (!imageUrl && google_photo) {
@@ -359,13 +349,13 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
           const urls = await getAlbumPhotoUrls(google_photo.slice('album:'.length), 1);
           imageUrl = urls[0];
         }
-      } catch (e) { log(`Google Photos fetch failed: ${e.message}`); }
+      } catch (e) { log(`Google Photos fetch failed: ${e.message}`); await sendAlert('Instagram agent: Google Photos fetch failed', e.message); }
     }
 
     if (!skip_design && !imageUrl && process.env.CANVA_CLIENT_ID && process.env.CANVA_TEMPLATE_ID) {
       log('Step 2: Canva design');
       try { imageUrl = await designPost(savedPath); }
-      catch (e) { log(`Canva design failed: ${e.message}`); }
+      catch (e) { log(`Canva design failed: ${e.message}`); await sendAlert('Instagram agent: Canva design failed', e.message); }
     }
 
     if (skip_publish) {
@@ -392,6 +382,15 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   }
 
   throw new Error(`Unknown tool: ${name}`);
+}
+
+server.setRequestHandler(CallToolRequestSchema, async (req) => {
+  try {
+    return await handleTool(req);
+  } catch (e) {
+    await sendAlert(`Instagram agent: ${req.params.name} failed`, e.message);
+    throw e;
+  }
 });
 
 const transport = new StdioServerTransport();

@@ -14,6 +14,7 @@
  */
 
 import path from 'node:path';
+import { fetchWithRetry } from './net.js';
 import { promises as fs } from 'node:fs';
 import { REPO_ROOT } from './llm.js';
 
@@ -77,13 +78,13 @@ export async function getAlbumImageUrls(shareUrl, n = Infinity) {
     pageUrl = await resolveRedirect(shareUrl);
   }
 
-  const resp = await fetch(pageUrl, {
+  const resp = await fetchWithRetry(pageUrl, {
     headers: {
       // Mimic a real browser so the page returns full data
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       'Accept-Language': 'en-US,en;q=0.9',
     },
-  });
+  }, { label: 'Google Photos album page' });
 
   if (!resp.ok) {
     throw new Error(`Failed to fetch shared album page (${resp.status}): ${pageUrl}`);
