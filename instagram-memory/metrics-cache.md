@@ -1,3 +1,5 @@
+> **INVALID — do not use as evidence.** This snapshot was taken while the IG token was expired; the zeros are from failed API calls, not real metrics. The next run will overwrite this file with real numbers. (Noted 2026-10-13.)
+
 # Metrics cache — refreshed 2026-06-11T09:00Z
 
 | post_id | published | likes | comments | reach | saves | age_h |

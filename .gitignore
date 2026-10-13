@@ -41,9 +41,9 @@ logs/
 instagram/metrics/*
 !instagram/metrics/.gitkeep
 
-# Local setup files — contain credentials, never commit
-setup-claude-desktop.ps1
+# Generated Claude Desktop config (setup-claude-desktop.ps1 writes it into %APPDATA%)
 claude_desktop_config.json
+*.bak
 
 # OS
 .DS_Store

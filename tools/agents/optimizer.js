@@ -6,7 +6,7 @@
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { callClaude, loadChatModePrompt, readRepoFile, writeRepoFile, REPO_ROOT } from './llm.js';
+import { callClaude, loadChatModePrompt, readAccountMemory, writeRepoFile, REPO_ROOT } from './llm.js';
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -39,7 +39,7 @@ function extractFinalDraft(text) {
 
 export async function runOptimizer(topic, { save = true } = {}) {
   const system = await loadChatModePrompt('ig-optimizer');
-  const lessons = await readRepoFile('instagram/lessons.md');
+  const { brandVoice, learnings, lessons } = await readAccountMemory();
 
   const userMsg = [
     `Write an Instagram post about: ${topic}`,
@@ -47,7 +47,18 @@ export async function runOptimizer(topic, { save = true } = {}) {
     'Run all 3 rounds automatically without asking me anything.',
     'At the end, output ONLY the final winning post inside a single fenced ```markdown block.',
     '',
-    '--- Current lessons.md ---',
+    'The brand voice below contains hard rules (hashtag count and size, emoji limit, caption style,',
+    'forbidden phrases). They override any default in your instructions, including the hashtag',
+    'guidance in the post format. A draft that breaks a brand-voice rule scores 0 for that criterion.',
+    'Apply "Confirmed" learnings; you may test one "Active" hypothesis, and name it under "Lessons applied".',
+    '',
+    '--- brand-voice.md (hard rules) ---',
+    brandVoice || '(none)',
+    '',
+    '--- learnings.md (hypotheses) ---',
+    learnings || '(none)',
+    '',
+    '--- lessons.md (reviewer notes) ---',
     lessons || '(empty)',
   ].join('\n');
 

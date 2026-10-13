@@ -1,5 +1,8 @@
 services:
 
+  # Docker needs ANTHROPIC_API_KEY (default) or OPENAI_API_KEY in .env — set
+  # DOCKER_LLM_BACKEND=openai to use OpenAI. Your Claude subscription can't be used here.
+  #
   # ── One-shot pipeline (optimize → design → publish → review) ─────────────
   # Usage:
   #   docker compose run --rm pipeline "Japan" --google-album-url "https://..."
@@ -7,8 +10,12 @@ services:
   pipeline:
     build: .
     env_file: .env
+    environment:
+      # The Claude Code CLI isn't in the image, so Docker uses an API key backend.
+      LLM_BACKEND: ${DOCKER_LLM_BACKEND:-anthropic}
     volumes:
       - ./instagram:/app/instagram
+      - ./instagram-memory:/app/instagram-memory
     profiles:
       - run
 
@@ -21,8 +28,12 @@ services:
     build: .
     entrypoint: ["node", "tools/agents/optimizer.js"]
     env_file: .env
+    environment:
+      # The Claude Code CLI isn't in the image, so Docker uses an API key backend.
+      LLM_BACKEND: ${DOCKER_LLM_BACKEND:-anthropic}
     volumes:
       - ./instagram:/app/instagram
+      - ./instagram-memory:/app/instagram-memory
     profiles:
       - run
 
@@ -30,8 +41,12 @@ services:
     build: .
     entrypoint: ["node", "tools/agents/publisher.js"]
     env_file: .env
+    environment:
+      # The Claude Code CLI isn't in the image, so Docker uses an API key backend.
+      LLM_BACKEND: ${DOCKER_LLM_BACKEND:-anthropic}
     volumes:
       - ./instagram:/app/instagram
+      - ./instagram-memory:/app/instagram-memory
     profiles:
       - run
 
@@ -39,8 +54,12 @@ services:
     build: .
     entrypoint: ["node", "tools/agents/reviewer.js"]
     env_file: .env
+    environment:
+      # The Claude Code CLI isn't in the image, so Docker uses an API key backend.
+      LLM_BACKEND: ${DOCKER_LLM_BACKEND:-anthropic}
     volumes:
       - ./instagram:/app/instagram
+      - ./instagram-memory:/app/instagram-memory
     profiles:
       - run
 
@@ -53,7 +72,11 @@ services:
     build: .
     entrypoint: ["node", "tools/ig-mcp-server.js"]
     env_file: .env
+    environment:
+      # The Claude Code CLI isn't in the image, so Docker uses an API key backend.
+      LLM_BACKEND: ${DOCKER_LLM_BACKEND:-anthropic}
     volumes:
       - ./instagram:/app/instagram
+      - ./instagram-memory:/app/instagram-memory
     stdin_open: true
     tty: false

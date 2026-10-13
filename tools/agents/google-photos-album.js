@@ -36,6 +36,18 @@ export async function saveUsedImages(set) {
 }
 
 /**
+ * Record a Google Photos image as used. Call this only after the post has
+ * actually been published, so failed runs don't burn photos.
+ * Non-Google URLs are ignored.
+ */
+export async function markImageUsed(url) {
+  if (!url || !url.includes('googleusercontent.com')) return;
+  const used = await loadUsedImages();
+  used.add(url.split('=')[0]);
+  await saveUsedImages(used);
+}
+
+/**
  * Append Google's image-serving size parameter.
  * =w1080  → resize to 1080 px wide (keeps aspect ratio, good for Instagram)
  */
@@ -107,9 +119,9 @@ export async function getAlbumImageUrls(shareUrl, n = Infinity) {
 }
 
 /**
- * Returns the next unused photo from the shared album.
- * Tracks used image base-URLs in instagram/used-images.json so each run
- * picks a different photo. Once all photos are used, the tracking resets.
+ * Returns the next unused photo from the shared album, based on
+ * instagram/used-images.json. Does not mark it as used — the publisher does
+ * that after a successful publish. Once all photos are used, starts over.
  *
  * @param {string} shareUrl
  * @returns {Promise<string>}
@@ -127,17 +139,13 @@ export async function getLatestAlbumImageUrl(shareUrl) {
     // Pick the first unused image
     chosen = unused[0];
   } else {
-    // All photos used — reset and start over
-    console.log('[google-photos-album] All album images have been used. Resetting.');
-    used.clear();
+    // All photos used — start over
+    console.log('[google-photos-album] All album images have been used. Starting over.');
     chosen = [...basesToSized.entries()][0];
   }
 
-  const [base, sizedUrl] = chosen;
-  used.add(base);
-  await saveUsedImages(used);
-
-  console.log(`[google-photos-album] Picked image (${basesToSized.size - unused.length + 1}/${basesToSized.size} used): ${sizedUrl}`);
+  const [, sizedUrl] = chosen;
+  console.log(`[google-photos-album] Picked image (${basesToSized.size - unused.length}/${basesToSized.size} already used): ${sizedUrl}`);
   return sizedUrl;
 }
 

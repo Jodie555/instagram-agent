@@ -1,14 +1,10 @@
 #!/usr/bin/env node
 /**
- * Minimal Instagram MCP server (stub).
+ * Instagram MCP server.
  *
- * Exposes two tools to VS Code chat modes:
- *   - create_post(caption, image_url)        -> { post_id }
- *   - get_post_metrics(post_id)              -> { likes, comments, reach, saves }
- *
- * The implementations are STUBS that read/write local JSON files so you can
- * test the full agent loop without real Instagram credentials. Replace the
- * marked sections with calls to the Instagram Graph API when ready.
+ * Exposes the agents (optimize, pick photo, design, publish, metrics, review,
+ * full pipeline) as MCP tools for VS Code and Claude Desktop. Publishing and
+ * metrics use the Instagram Graph API with IG_ACCESS_TOKEN / IG_USER_ID from .env.
  *
  * Real API docs:
  *   https://developers.facebook.com/docs/instagram-api/
@@ -38,7 +34,9 @@ import { runReviewer }   from './agents/reviewer.js';
 import { designPost }    from './agents/canva-designer.js';
 import { getLatestPhotoUrl, getAlbumPhotoUrls } from './agents/google-photos.js';
 import { pickBestPhoto } from './agents/photo-picker.js';
+import { markImageUsed } from './agents/google-photos-album.js';
 import { REPO_ROOT }     from './agents/llm.js';
+import { graphGet, graphPost } from './agents/graph.js';
 
 const ROOT = process.env.IG_DATA_DIR
   || path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\//, '')), '..', 'instagram');
@@ -46,25 +44,6 @@ const METRICS_DIR = path.join(ROOT, 'metrics');
 
 const IG_TOKEN   = process.env.IG_ACCESS_TOKEN;
 const IG_USER_ID = process.env.IG_USER_ID;
-const GRAPH_BASE = 'https://graph.facebook.com/v19.0';
-
-async function graphPost(endpoint, params) {
-  const url = new URL(`${GRAPH_BASE}${endpoint}`);
-  Object.entries({ ...params, access_token: IG_TOKEN }).forEach(([k, v]) =>
-    url.searchParams.set(k, v)
-  );
-  const res = await fetch(url.toString(), { method: 'POST' });
-  return res.json();
-}
-
-async function graphGet(endpoint, params = {}) {
-  const url = new URL(`${GRAPH_BASE}${endpoint}`);
-  Object.entries({ ...params, access_token: IG_TOKEN }).forEach(([k, v]) =>
-    url.searchParams.set(k, v)
-  );
-  const res = await fetch(url.toString());
-  return res.json();
-}
 
 const server = new Server(
   { name: 'instagram', version: '0.1.0' },
@@ -167,14 +146,13 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     // ── Photo source tools ──────────────────────────────────────────────────
     {
       name: 'pick_photo_from_album',
-      description: 'Pick the best photo from a Google Photos shared album using GPT-4o vision. Returns a full-resolution image URL.',
+      description: 'Pick the best photo from a Google Photos shared album using AI vision. Returns a full-resolution image URL.',
       inputSchema: {
         type: 'object',
         properties: {
-          share_url:  { type: 'string', description: 'photos.app.goo.gl or photos.google.com/share URL' },
+          share_url:  { type: 'string', description: 'photos.app.goo.gl or photos.google.com/share URL (defaults to GOOGLE_ALBUM_URL in .env)' },
           max_photos: { type: 'number', description: 'Max candidates to send to the LLM (default 10)' },
         },
-        required: ['share_url'],
       },
     },
     {
@@ -196,7 +174,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         properties: {
           topic:             { type: 'string',  description: 'Subject or theme for the post' },
           image_url:         { type: 'string',  description: 'Optional preselected public image URL (skips photo selection)' },
-          google_album_url:  { type: 'string',  description: 'Optional Google Photos shared album URL — best photo will be picked via GPT-4o vision' },
+          google_album_url:  { type: 'string',  description: 'Optional Google Photos shared album URL (defaults to GOOGLE_ALBUM_URL in .env) — best photo will be picked via AI vision' },
           google_photo:      { type: 'string',  description: 'Optional Google Photos API source: "latest" or "album:<albumId>"' },
           max_photos:        { type: 'number',  description: 'Max album candidates for the picker (default 10)' },
           wait_hours:        { type: 'number',  description: 'Hours to poll for metrics before giving up (default 0 = single check)' },
@@ -247,6 +225,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
     if (!published.id) {
       throw new Error(`Publish failed: ${JSON.stringify(published)}`);
     }
+    await markImageUsed(args.image_url);
 
     return {
       content: [{ type: 'text', text: JSON.stringify({ post_id: published.id }) }],
@@ -258,18 +237,27 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       throw new Error('IG_ACCESS_TOKEN must be set in environment.');
     }
 
-    // Fetch likes + comments count from the media object
+    // Fetch likes + comments count from the media object. graphGet throws on
+    // API errors (e.g. expired token) so we never cache fake zeros.
     const media = await graphGet(`/${args.post_id}`, {
       fields: 'like_count,comments_count',
     });
 
-    // Fetch reach + saves from insights
-    const insights = await graphGet(`/${args.post_id}/insights`, {
-      metric: 'reach,saved',
-    });
+    // Fetch reach + saves from insights. If insights are unavailable (missing
+    // permission, post too new), record null rather than 0.
+    let insights = null;
+    let insightsNote = null;
+    try {
+      insights = await graphGet(`/${args.post_id}/insights`, {
+        metric: 'reach,saved',
+      });
+    } catch (e) {
+      insightsNote = `insights unavailable: ${e.message}`;
+      console.error(`[get_post_metrics] ${insightsNote}`);
+    }
 
     const getValue = (metric) =>
-      insights?.data?.find((d) => d.name === metric)?.values?.[0]?.value ?? 0;
+      insights?.data?.find((d) => d.name === metric)?.values?.[0]?.value ?? null;
 
     const result = {
       post_id:  args.post_id,
@@ -277,6 +265,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
       comments: media.comments_count ?? 0,
       reach:    getValue('reach'),
       saves:    getValue('saved'),
+      ...(insightsNote ? { note: insightsNote } : {}),
     };
 
     // Also cache to local metrics file for the reviewer agent
@@ -323,7 +312,9 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   }
 
   if (name === 'pick_photo_from_album') {
-    const imageUrl = await pickBestPhoto(args.share_url, { maxPhotos: args.max_photos ?? 10 });
+    const shareUrl = args.share_url || process.env.GOOGLE_ALBUM_URL;
+    if (!shareUrl) throw new Error('share_url is required (or set GOOGLE_ALBUM_URL in .env)');
+    const imageUrl = await pickBestPhoto(shareUrl, { maxPhotos: args.max_photos ?? 10 });
     return { content: [{ type: 'text', text: JSON.stringify({ image_url: imageUrl }) }] };
   }
 
@@ -341,7 +332,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
   if (name === 'auto_pipeline') {
     const log = (m) => console.error(`[pipeline] ${m}`);
     const {
-      topic, image_url, google_album_url, google_photo,
+      topic, image_url, google_album_url = process.env.GOOGLE_ALBUM_URL, google_photo,
       max_photos = 10, wait_hours = 0, poll_seconds = 30,
       skip_design = false, skip_publish = false, skip_review = false,
     } = args;

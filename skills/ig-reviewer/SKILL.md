@@ -8,7 +8,7 @@ description: "Use this skill to review published Instagram post performance and 
 Your only job: review published posts and append insights to `instagram/lessons.md`. Never draft new posts.
 
 ## Workspace root
-C:\Users\Jodie\instagram-agent\
+The instagram-agent project folder (the folder you gave Claude access to). All paths below are relative to it.
 
 ## Workflow
 1. Find metrics — in order: `instagram/metrics/<post_id>.json`, `get_post_metrics` MCP tool, or user-supplied numbers.

@@ -7,19 +7,21 @@ description: Source-of-truth playbook for the daily 9am Instagram auto-pipeline.
 
 This is the source of truth. If the scheduled-task prompt and this file disagree, **this file wins**.
 
-The account is a Japan travel / cultural content account. Posts are images with captions. The pipeline is hypothesis-driven: every post tests one explicit hypothesis from `learnings.md`, and metrics are reviewed 48h later to confirm or kill the hypothesis.
+What the account is about (niche, audience, voice, visual rules) is defined in `instagram-memory/brand-voice.md`. Posts are images with captions. The pipeline is hypothesis-driven: every post tests one explicit hypothesis from `learnings.md`, and metrics are reviewed 48h later to confirm or kill the hypothesis.
 
 ## Paths (single source of truth)
 
-- Playbook: `C:\Users\Jodie\instagram-agent\instagram-playbook\SKILL.md` (this file)
-- Memory folder: `C:\Users\Jodie\instagram-agent\instagram-memory\`
+All paths are relative to the project folder — the folder that contains this `instagram-playbook` folder. Account settings (Instagram token, album link, AI backend) live in `.env` in that folder.
+
+- Playbook: `instagram-playbook\SKILL.md` (this file)
+- Memory folder: `instagram-memory\`
   - `brand-voice.md` — voice + visual constraints (non-negotiable)
   - `learnings.md` — hypotheses (Active / Confirmed / Killed) with evidence
   - `post-log.md` — newest-first log of every published post
   - `metrics-cache.md` — most recent metrics snapshot for the last 7 posts
-- Draft posts (one per run): `C:\Users\Jodie\instagram-agent\instagram\posts\YYYY-MM-DD.md`
-- Used-images dedupe: `C:\Users\Jodie\instagram-agent\instagram\used-images.json`
-- Per-post metrics JSON: `C:\Users\Jodie\instagram-agent\instagram\metrics\<post_id>.json`
+- Draft posts (one per run): `instagram\posts\YYYY-MM-DD.md`
+- Used-images dedupe: `instagram\used-images.json`
+- Per-post metrics JSON: `instagram\metrics\<post_id>.json`
 
 ## Steps the agent must run, in order
 
@@ -44,24 +46,26 @@ Choose one Active hypothesis from `learnings.md` that has the fewest supporting 
 
 ### Step 5 — Run the pipeline
 Call `mcp__instagram__auto_pipeline` with:
-- `topic`: a Japan-related theme aligned to today's hypothesis (e.g., "Kyoto bamboo forest at sunrise", "Tokyo street food", "onsen culture")
+- `topic`: a theme that fits the account niche in `brand-voice.md` and today's hypothesis (for the example Japan-travel account: "Kyoto bamboo forest at sunrise", "Tokyo street food", "onsen culture")
 - Voice/style constraints from `brand-voice.md` summarized into the topic string if the tool doesn't accept them separately
-- `skip_review: false`, `skip_publish: false`
+- `google_album_url`: omit it — it defaults to `GOOGLE_ALBUM_URL` in `.env`
+- `skip_publish: true` — **always**. The draft must pass Step 6 before anything is published.
 
-`auto_pipeline` handles photo pick → design → caption → review → publish in one call.
+With `skip_publish: true`, `auto_pipeline` drafts the caption and picks the photo, then stops. It returns `post_file` and `image_url`. If `image_url` is missing, log the failure in `post-log.md` and stop — do not publish without a real photo.
 
 **Fallback if `auto_pipeline` errors or is unavailable:**
 1. `pick_photo_from_album` (or use a Google Photos URL from a recent run) → image_url
 2. Write the post markdown to `instagram\posts\YYYY-MM-DD[-vN].md` following the existing template (Topic, Caption, Hashtags, Image prompt, Lessons applied)
-3. `publish_post(post_file, image_url)` → post_id
-4. `review_post(post_id)` — runs against the published post and appends to `instagram\lessons.md`
+3. Continue to Step 6.
 
 **Note on Canva design tools.** `design_post`, `canva_fill_template`, and `canva_export` require `CANVA_TEMPLATE_ID` (currently commented out in `.env`). This account uses Google-Photos URLs directly — do **not** call the Canva tools unless `CANVA_TEMPLATE_ID` is set. If asked to "test the design step", explain that the image comes from `pick_photo_from_album`, not Canva, on this account.
 
-### Step 6 — Verify review passed
-`review_post` writes lessons to `instagram\lessons.md`. If `review_post` returned an error or a "do not publish" signal in the auto_pipeline result, **do not** re-publish. Log the failure in `post-log.md` and stop.
+### Step 6 — Pre-publish check, then publish
+Read the draft at `post_file` and run its caption through the **pre-publish checklist** below. Any failure → rewrite the caption in `post_file` once and re-check. Second failure → log in `post-log.md` and stop (do not publish).
 
-Before accepting the draft caption, the agent must also run it through the **pre-publish checklist** below. Any failure → rewrite once. Second failure → log and stop.
+When the checklist passes, call `publish_post(post_file, image_url)` → post_id. If it fails, follow hard rule 3.
+
+`review_post` is **not** a pre-publish gate: it needs real metrics, so it only runs on posts that are already live (≥48h old, with a metrics file). Run it from Step 2/3 on later days, not here.
 
 #### Pre-publish caption checklist (style-guide derived)
 
@@ -71,9 +75,8 @@ Source: `instagram-playbook/photography_instagram_style_guide.docx`. The agent c
 2. **No template phrases:** Caption contains none of the forbidden phrases in `brand-voice.md`, and none of the following from the style guide: generic platitudes ("Beautiful day in…"), engagement-bait questions ("What do you think?"), or hashtag walls of 11+ tags.
 3. **Partner tags present (per A7):** Caption includes at least one location tag and, where applicable, one credit or partner tag (e.g. JNTO, regional tourism, photographer credit). Skip only if no relevant partner exists for the topic.
 4. **Visual move applied:** The image prompt or selected photo follows the repeatable visual move defined in `brand-voice.md` (single human-scale subject in lower-left/right third). Note in the post markdown if the image deviates and why.
-5. **Hashtag count:** Within the 5–10 range from `brand-voice.md`. If A5 (or A6+) graduates to Confirmed and shifts the target, update this number here.
-
-The reviewer (`review_post`) handles compliance and IG-policy checks; this checklist handles craft. Both must pass.
+5. **Hashtag count:** 3–6 total (hard rule 5 / `brand-voice.md`). If A5 (or A6+) graduates to Confirmed and shifts the target, update this number here and in hard rule 5.
+6. **Image present:** `image_url` is a real photo URL, not empty or a placeholder.
 
 ### Step 7 — Log the post (newest at top)
 Prepend a new entry to `post-log.md` using the exact format in §"post-log format" below.
@@ -83,8 +86,8 @@ Output a single line: `Posted at 9am — <post_id> — testing: <hypothesis> —
 
 ## Hard rules — never violate
 
-1. **Never publish without review_post approving.** If review fails, log and stop.
-2. **Never reuse a photo from the last 30 entries of `post-log.md`.** The pipeline also writes to `instagram\used-images.json` — treat that as the second guardrail.
+1. **Never publish without the Step 6 pre-publish checklist passing.** If it fails twice, log and stop.
+2. **Never reuse a photo from the last 30 entries of `post-log.md`.** `publish_post` also records each published photo in `instagram\used-images.json` — treat that as the second guardrail.
 3. **If `publish_post` fails, log the error in `post-log.md` and stop the run.** No retries.
 4. **Voice and visual rules in `brand-voice.md` are non-negotiable.**
 5. **Hashtags: 3–6 total** — 2–4 niche tags + 1–2 account/location tags. No mega-discovery hashtags. See `brand-voice.md` for the full rule (updated 2026-05-24).

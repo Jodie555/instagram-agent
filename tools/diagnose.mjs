@@ -1,23 +1,14 @@
 // IG account distribution diagnostic — pulls account state, follower count,
 // recent post insights, and checks token validity / scopes.
 // Reads token from instagram-agent/.env so we never log it.
+//
+// Usage: node tools/diagnose.mjs
 
-import { readFileSync } from 'node:fs';
+import { GRAPH_BASE } from './agents/graph.js'; // also loads .env
 
-const envPath = '/sessions/elegant-sweet-planck/mnt/instagram-agent/.env';
-const env = Object.fromEntries(
-  readFileSync(envPath, 'utf8')
-    .split('\n')
-    .filter(l => l && !l.startsWith('#') && l.includes('='))
-    .map(l => {
-      const i = l.indexOf('=');
-      return [l.slice(0, i).trim(), l.slice(i + 1).trim()];
-    })
-);
-
-const TOKEN = env.IG_ACCESS_TOKEN;
-const USER_ID = env.IG_USER_ID;
-const GRAPH = 'https://graph.facebook.com/v19.0';
+const TOKEN = process.env.IG_ACCESS_TOKEN;
+const USER_ID = process.env.IG_USER_ID;
+const GRAPH = GRAPH_BASE;
 
 async function gget(endpoint, params = {}) {
   const url = new URL(`${GRAPH}${endpoint}`);

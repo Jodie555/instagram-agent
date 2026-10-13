@@ -11,6 +11,7 @@
  *   CANVA_CLIENT_SECRET
  */
 
+import './llm.js'; // loads .env before the constants below are read
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,7 +19,8 @@ import { fileURLToPath } from 'node:url';
 const __dirname   = path.dirname(fileURLToPath(import.meta.url));
 const TOKENS_FILE = path.join(__dirname, '..', '.canva-tokens.json');
 const API_BASE    = 'https://api.canva.com/rest/v1';
-const REDIRECT_URI = 'https://jodie555.github.io/instagram-agent/callback.html';
+// Must match the redirect URI registered in your Canva app (and canva-auth.js).
+const REDIRECT_URI = process.env.OAUTH_REDIRECT_URI || 'https://jodie555.github.io/instagram-agent/callback.html';
 
 // Refresh 5 minutes before expiry
 const REFRESH_BUFFER_MS = 5 * 60 * 1000;

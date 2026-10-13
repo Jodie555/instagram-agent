@@ -1,15 +1,15 @@
 /**
- * Photo Picker agent — uses GPT-4o vision (via GitHub Models) to select
+ * Photo Picker agent — uses LLM vision (see llm.js for the backend) to select
  * the photo from a Google Photos album most likely to get the most likes.
  *
  * Sends low-res thumbnails (=w300) to minimise token usage, then returns
  * the full-resolution URL (=w1080) of the winning photo.
- * Tracks the chosen photo in instagram/used-images.json so it won't be
- * re-selected on the next run.
+ * Skips photos listed in instagram/used-images.json. The publisher adds the
+ * chosen photo to that list once the post is actually published.
  */
 
-import { callClaude, readRepoFile } from './llm.js';
-import { getAlbumImageUrls, loadUsedImages, saveUsedImages } from './google-photos-album.js';
+import { callClaude, readAccountMemory } from './llm.js';
+import { getAlbumImageUrls, loadUsedImages } from './google-photos-album.js';
 
 /**
  * Pick the best photo from a shared Google Photos album using LLM vision.
@@ -30,9 +30,6 @@ export async function pickBestPhoto(shareUrl, { maxPhotos = 10 } = {}) {
   if (pool.length === 0) throw new Error('[photo-picker] No photos found in album.');
 
   if (pool.length === 1) {
-    const base = pool[0].split('=')[0];
-    used.add(base);
-    await saveUsedImages(used);
     console.log('[photo-picker] Only 1 candidate — using it directly.');
     return pool[0];
   }
@@ -40,13 +37,13 @@ export async function pickBestPhoto(shareUrl, { maxPhotos = 10 } = {}) {
   // Use low-res thumbnails for vision to minimise token cost
   const thumbUrls = pool.map((u) => `${u.split('=')[0]}=w300`);
 
-  const lessons = await readRepoFile('instagram/lessons.md');
+  const { brandVoice, learnings } = await readAccountMemory();
 
   const system =
     'You are an Instagram engagement expert. ' +
     'You will be shown several photos and must choose the one most likely to get the most likes on Instagram. ' +
     'Consider composition, lighting, colour, subject clarity, and emotional impact. ' +
-    'Use the past lessons provided to inform your choice. ' +
+    'Prefer photos that follow the visual rules in the brand voice, and use the learnings to inform your choice. ' +
     'Respond in exactly this format (two lines, nothing else):\n' +
     'PICK: <1-based index>\n' +
     'REASON: <one sentence explaining why>';
@@ -55,8 +52,11 @@ export async function pickBestPhoto(shareUrl, { maxPhotos = 10 } = {}) {
     `There are ${pool.length} photos (shown in order, numbered 1 to ${pool.length}).`,
     'Which one will get the most likes on Instagram?',
     '',
-    '--- Past lessons from our Instagram account ---',
-    lessons || '(no lessons yet)',
+    '--- Brand voice (visual rules) ---',
+    brandVoice || '(none)',
+    '',
+    '--- Learnings (hypotheses about what works) ---',
+    learnings || '(none yet)',
     '',
     'Reply in the required format.',
   ].join('\n');
@@ -73,11 +73,9 @@ export async function pickBestPhoto(shareUrl, { maxPhotos = 10 } = {}) {
   console.log(`[photo-picker] Reason: ${reason}`);
 
   const chosen = pool[index];
-  const chosenBase = chosen.split('=')[0];
 
-  used.add(chosenBase);
-  await saveUsedImages(used);
-
+  // Not marked as used here — the publisher marks it after a successful
+  // publish, so a failed run doesn't burn the photo.
   console.log(`[photo-picker] Selected photo ${index + 1} of ${pool.length}.`);
   return chosen;
 }

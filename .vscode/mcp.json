@@ -5,8 +5,7 @@
       "command": "node",
       "args": ["${workspaceFolder}/tools/ig-mcp-server.js"],
       "env": {
-        "IG_DATA_DIR": "${workspaceFolder}/instagram",
-        "IG_ACCESS_TOKEN": "${env:IG_ACCESS_TOKEN}"
+        "IG_DATA_DIR": "${workspaceFolder}/instagram"
       }
     }
   }

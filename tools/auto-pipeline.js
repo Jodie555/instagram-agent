@@ -20,6 +20,7 @@
  * Optional env: CANVA_CLIENT_ID, CANVA_CLIENT_SECRET, CANVA_TEMPLATE_ID (for image generation)
  *               IG_ACCESS_TOKEN, IG_USER_ID (else publish runs in stub mode)
  *               GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET (for Google Photos; run google-photos-auth.js first)
+ *               GOOGLE_ALBUM_URL (default for --google-album-url)
  */
 
 import path from 'node:path';
@@ -33,7 +34,7 @@ import { getLatestPhotoUrl, getAlbumPhotoUrls } from './agents/google-photos.js'
 import { pickBestPhoto } from './agents/photo-picker.js';
 
 function parseArgs(argv) {
-  const args = { topic: '', imageUrl: undefined, googlePhoto: undefined, googleAlbumUrl: undefined, waitHours: 0, pollSeconds: 30, maxPhotos: 10, skipDesign: false, skipPublish: false, skipReview: false };
+  const args = { topic: '', imageUrl: undefined, googlePhoto: undefined, googleAlbumUrl: process.env.GOOGLE_ALBUM_URL || undefined, waitHours: 0, pollSeconds: 30, maxPhotos: 10, skipDesign: false, skipPublish: false, skipReview: false };
   const positional = [];
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];

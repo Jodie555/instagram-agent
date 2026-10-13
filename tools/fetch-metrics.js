@@ -13,25 +13,7 @@ import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { REPO_ROOT } from './agents/llm.js'; // also loads .env
-
-const GRAPH_BASE = 'https://graph.facebook.com/v19.0';
-
-async function graphGet(endpoint, params = {}) {
-  const token = process.env.IG_ACCESS_TOKEN;
-  if (!token) throw new Error('IG_ACCESS_TOKEN is not set');
-  const url = new URL(`${GRAPH_BASE}${endpoint}`);
-  Object.entries({ ...params, access_token: token }).forEach(([k, v]) =>
-    url.searchParams.set(k, v)
-  );
-  const res = await fetch(url.toString());
-  const json = await res.json();
-  if (json.error) {
-    const err = new Error(`Graph API error: ${json.error.message} (code ${json.error.code})`);
-    err.payload = json.error;
-    throw err;
-  }
-  return json;
-}
+import { graphGet } from './agents/graph.js';
 
 export async function fetchMetrics(postId) {
   // Basic counts + caption + timestamp.

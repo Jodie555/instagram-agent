@@ -1,4 +1,7 @@
-FROM node:20-alpine
+# Note: the Claude Code CLI isn't available in this image, so LLM_BACKEND=claude-code
+# won't work here. Set ANTHROPIC_API_KEY (or OPENAI_API_KEY) in .env and
+# override LLM_BACKEND (see docker-compose.yml).
+FROM node:22-alpine
 
 WORKDIR /app
 
@@ -7,6 +10,7 @@ RUN cd tools && npm ci --omit=dev
 
 COPY tools ./tools
 COPY instagram ./instagram
+COPY instagram-memory ./instagram-memory
 COPY skills ./skills
 COPY .github ./.github
 

@@ -12,13 +12,14 @@
  *   1. Create a project at https://console.cloud.google.com/
  *   2. Enable "Photos Library API"
  *   3. Create OAuth 2.0 credentials (Web Application type)
- *   4. Add authorized redirect URI:
- *        https://jodie555.github.io/instagram-agent/callback.html
+ *   4. Add authorized redirect URI: the value of OAUTH_REDIRECT_URI in .env,
+ *      or by default https://jodie555.github.io/instagram-agent/callback.html
  *   5. Copy Client ID and Client Secret into env vars below
  *
  * Tokens are saved to tools/.google-tokens.json (gitignored).
  */
 
+import './agents/llm.js'; // loads .env
 import readline from 'node:readline';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
@@ -30,7 +31,7 @@ const TOKENS_FILE = path.join(__dirname, '.google-tokens.json');
 
 const CLIENT_ID     = process.env.GOOGLE_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const REDIRECT_URI  = 'https://jodie555.github.io/instagram-agent/callback.html';
+const REDIRECT_URI  = process.env.OAUTH_REDIRECT_URI || 'https://jodie555.github.io/instagram-agent/callback.html';
 const SCOPES        = 'https://www.googleapis.com/auth/photoslibrary.readonly';
 
 if (!CLIENT_ID || !CLIENT_SECRET) {

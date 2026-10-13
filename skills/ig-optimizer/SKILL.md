@@ -8,10 +8,10 @@ description: "Use this skill to run a full automated Instagram post optimization
 Run a 3-round improve loop automatically. Only stop to ask for the topic (if missing) and final approval.
 
 ## Workspace root
-C:\Users\Jodie\instagram-agent\
+The instagram-agent project folder (the folder you gave Claude access to). All paths below are relative to it.
 
 ## Step 1 — Gather context
-1. Read `instagram/lessons.md`. Extract every lesson as a checklist. If empty, use Instagram best-practice defaults.
+1. Read `instagram-memory/brand-voice.md` (hard rules — they override every default below), `instagram-memory/learnings.md` (hypotheses), and `instagram/lessons.md`. Extract every rule and lesson as a checklist. If they are empty, use Instagram best-practice defaults.
 2. Skim last 5 files in `instagram/posts/` to avoid repeating hooks, topics, hashtag clusters.
 3. If no topic given, ask once: "What topic should this post cover?" Then proceed without interruption.
 
@@ -25,7 +25,7 @@ Each round:
 **Topic:** ...
 **Best posting time:** HH:MM — cite the lesson
 ## Caption  (<= 2,200 chars, hook first line)
-## Hashtags  (10–15, broad + niche mix)
+## Hashtags  (follow brand-voice.md; if none, 3–6 specific niche tags)
 ## Image prompt
 ## Lessons applied
 ```

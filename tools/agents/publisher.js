@@ -12,6 +12,8 @@ import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { readRepoFile, writeRepoFile, REPO_ROOT } from './llm.js';
+import { GRAPH_BASE } from './graph.js';
+import { markImageUsed } from './google-photos-album.js';
 
 /**
  * Pull caption + image prompt out of a post markdown file.
@@ -42,7 +44,6 @@ export function parsePostMarkdown(md) {
  *   IG_USER_ID       — Instagram Business/Creator account id
  *
  * imageUrl must be a publicly accessible URL (Instagram fetches it server-side).
- * If no imageUrl is provided, falls back to stub mode.
  */
 async function publishToInstagram({ caption, imageUrl }) {
   const token = process.env.IG_ACCESS_TOKEN;
@@ -54,7 +55,11 @@ async function publishToInstagram({ caption, imageUrl }) {
     return { post_id, stub: true };
   }
 
-  const base = 'https://graph.facebook.com/v19.0';
+  if (!imageUrl) {
+    throw new Error('No image URL — refusing to publish. Pick a photo (or design one) first.');
+  }
+
+  const base = GRAPH_BASE;
 
   // Step 1 — create media container
   console.log('[publisher] Creating media container...');
@@ -96,7 +101,7 @@ async function publishToInstagram({ caption, imageUrl }) {
  * Publish a post markdown file. `imageUrl` is required by the IG Graph API
  * (and ignored in stub mode). Returns { post_id, postFile }.
  */
-export async function publishPost({ postFile, imageUrl = 'https://example.com/placeholder.jpg' }) {
+export async function publishPost({ postFile, imageUrl }) {
   const md = await readRepoFile(postFile);
   if (!md) throw new Error(`Post file not found: ${postFile}`);
 
@@ -111,6 +116,7 @@ export async function publishPost({ postFile, imageUrl = 'https://example.com/pl
 
   console.log(`[publisher] publishing ${postFile}...`);
   const result = await publishToInstagram({ caption: fullCaption, imageUrl });
+  if (!result.stub) await markImageUsed(imageUrl);
 
   // Annotate the post file with the published id for traceability.
   const annotated = `${md}\n\n---\n**Published:** ${new Date().toISOString()}  \n**post_id:** \`${result.post_id}\`\n`;

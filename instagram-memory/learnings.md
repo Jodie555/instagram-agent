@@ -69,19 +69,14 @@ Each entry must cite post IDs as evidence. Be conservative about graduating to C
 - **Future test (blocked by A3):** Carousels vs single images. The style guide showed every solo photographer in the sample (McCurry, Misshattan, Burkard) leans heavily on carousels for time-on-post. Cannot test here until A3 (single-subject) is resolved — the current brand-voice rule mandates single image for clean a/b signal.
 
 - **2026-05-24 (live refresh):** All 7 most-recent posts return **0 likes, 0 comments, 0 reach, 0 saves**. The previous reach=1 on `18327362755266164` is the only non-zero data point on record. This means caption / hashtag / posting-time A/B tests cannot produce measurable signal until the distribution floor is raised. The binding constraint is upstream of caption craft.
-- 2026-11-02: Account permissions may be limiting available metrics (impressions = null on some posts).
-- 2026-11-02: Initial engagement is low across the board — posting time or distribution may be the limiter.
-- 2026-11-03: Even optimized posting times need promotional support (stories, cross-promotion) for reach.
-- 2026-11-03: Try alternative formats (carousels, reels) once we have a clean single-image baseline.
-- 2026-11-03: Hashtag set has been generating minimal engagement — needs refresh.
 
 ## Reflection — 2026-05-24
 
 With every post at zero, no hypothesis was graduated or killed today. A1–A5 remain Active. The priority for the user (not the agent) is to address distribution before more caption iterations — recommend checking IG account access tier, posting to Stories, and tagging location/people in posts.
 
-## Reflection — 2026-06-03 (9am scheduled run)
+## Reflection — 2026-06-03 to 2026-06-11 (9 failed runs)
 
-Fresh metrics refresh: all 7 most-recent posts at 0 across every metric. `17876038611667883` (2026-05-31 Nezu Shrine) T+48h backfilled at 0. No hypothesis graduated or killed. A1–A8 remain Active. Today's pipeline failed again with expired `IG_ACCESS_TOKEN` (code 190/463, expired 2026-05-31 16:00 PDT). This is the third token expiry event. The 2026-05-31 token appears to have been short-lived (~3 days) rather than the expected 60-day long-lived token. **Critical action required:** user must exchange a short-lived token for a proper long-lived token and store it in `.env`. Today's intended hypothesis was A7 (partner account tagging, urban/Yanaka sub-theme) — carry forward to next run.
+Every run in this period failed on the expired `IG_ACCESS_TOKEN` (code 190/463, expired 2026-05-31 16:00 PDT). Nothing was published. **The all-zero metrics from these runs are not real** — they came from failed API calls that were saved as zeros (bug fixed 2026-10-13). Do not count them as evidence for or against any hypothesis. The intended next test was A7 (partner account tagging, urban/Yanaka sub-theme).
 
 ## Reflection — 2026-05-31 (9am scheduled run)
 
@@ -92,26 +87,6 @@ Fresh metrics refresh for all 7 most-recent posts returns 0 across every metric 
 Refreshed metrics for the latest 7 posts. Likes/comments/saves are still 0 across the board. Reach now shows tiny positive numbers on 4 of 7 (`18099874712018096`=2, `18117312688750053`=2, `18103894532001991`=3, `18089539370311940`=2). These are too small (and likely include the account owner) to confirm or kill anything — we still need ≥3 supporting posts at a comparable engagement floor.
 
 The earlier IG token expiration (logged in `post-log.md`) was almost certainly the reason both `auto_pipeline` and `publish_post` failed earlier today; if the token is now refreshed, the next post will be the first published since the fix. Today's hypothesis to test: **A3 (single-subject photo outperforms multi-panel collage)** — fewest supporting posts among Active hypotheses, and the most actionable lever the agent controls.
-
-## Reflection — 2026-06-11 (9am scheduled run, run 9)
-
-Fresh metrics refresh: all 7 most-recent posts at 0 across every metric. No hypothesis graduated or killed. A1–A8 remain Active. Pipeline failed again — same `OAuthException code 190/463`, same expiry (2026-05-31 16:00 PDT). This is the **9th consecutive failed run**. Account has not published in 11 days. A7 carries forward. Nothing will change until user replaces the token in `.env`.
-
-## Reflection — 2026-06-08 (9am scheduled run, run 8)
-
-Fresh metrics refresh: all 7 most-recent posts at 0 across every metric. No hypothesis graduated or killed. A1–A8 remain Active. Pipeline failed again — same `OAuthException code 190/463`, same expiry (2026-05-31 16:00 PDT). This is the **8th consecutive failed run**. Account has not published in 8 days. A7 carries forward. Nothing will change until user replaces the token in `.env`.
-
-## Reflection — 2026-06-07 (9am scheduled run, run 7)
-
-Fresh metrics refresh: all 7 most-recent posts at 0 across every metric. No hypothesis graduated or killed. A1–A8 remain Active. Pipeline failed again — same `OAuthException code 190/463`, same token expiry (2026-05-31 16:00 PDT). This is the **7th consecutive failed run**. The account has not published in 7 days. Token fix instructions have now been logged 7 times. Nothing will change until the user replaces the token in `.env`. Intended hypothesis A7 (partner account tagging, urban/Yanaka) carries forward to next run.
-
-## Reflection — 2026-06-06 (9am scheduled run, run 2)
-
-Second attempt same day. Fresh metrics refresh: all 7 most-recent posts still at 0. Pipeline failed again — same `OAuthException code 190/463`, same token expiry (2026-05-31 16:00 PDT). This is the **6th consecutive failed run**. Token has not been replaced. No post published since 2026-05-31. A1–A8 remain Active. **Action required from user:** the token fix instructions have been logged four times in `post-log.md` — nothing will publish until a valid 60-day long-lived token is stored in `.env`. Intended hypothesis A7 (partner account tagging, urban/Yanaka) carries forward again.
-
-## Reflection — 2026-06-06 (9am scheduled run)
-
-Fresh metrics refresh: all 7 most-recent posts at 0 across every metric. No hypothesis graduated or killed. A1–A8 remain Active. Today's pipeline failed again with expired `IG_ACCESS_TOKEN` (code 190/463, same expiry: 2026-05-31 16:00 PDT). This is the **5th consecutive failed run** due to the same root cause — the short-lived token from the 2026-05-31 successful post was never exchanged for a 60-day long-lived token. No new content has been published since 2026-05-31. **Urgent action required from user:** exchange a fresh short-lived token for a long-lived token (instructions in `post-log.md`). Today's intended hypothesis remains A7 (partner account tagging, urban/Yanaka sub-theme) — carry forward to next run.
 
 ## How the daily run uses this file
 
