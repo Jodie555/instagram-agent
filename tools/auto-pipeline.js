@@ -13,10 +13,14 @@
  *   node tools/auto-pipeline.js "<topic>" [--image <url>] [--wait-hours <n>]
  *                                          [--skip-design] [--skip-publish] [--skip-review]
  *                                          [--metrics-poll-seconds <n>]
+ *                                          [--google-photo latest|album:<albumId>]
+ *                                          [--google-album-url <shareUrl>]
  *
  * Required env: ANTHROPIC_API_KEY
  * Optional env: CANVA_CLIENT_ID, CANVA_CLIENT_SECRET, CANVA_TEMPLATE_ID (for image generation)
  *               IG_ACCESS_TOKEN, IG_USER_ID (else publish runs in stub mode)
+ *               GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET (for Google Photos; run google-photos-auth.js first)
+ *               GOOGLE_ALBUM_URL (default for --google-album-url)
  */
 
 import path from 'node:path';
@@ -26,15 +30,21 @@ import { publishPost } from './agents/publisher.js';
 import { runReviewer } from './agents/reviewer.js';
 import { designPost } from './agents/canva-designer.js';
 import { REPO_ROOT } from './agents/llm.js';
+import { getLatestPhotoUrl, getAlbumPhotoUrls } from './agents/google-photos.js';
+import { pickBestPhoto } from './agents/photo-picker.js';
+import { sendAlert } from './agents/notify.js';
 
 function parseArgs(argv) {
-  const args = { topic: '', imageUrl: undefined, waitHours: 0, pollSeconds: 30, skipDesign: false, skipPublish: false, skipReview: false };
+  const args = { topic: '', imageUrl: undefined, googlePhoto: undefined, googleAlbumUrl: process.env.GOOGLE_ALBUM_URL || undefined, waitHours: 0, pollSeconds: 30, maxPhotos: 10, skipDesign: false, skipPublish: false, skipReview: false };
   const positional = [];
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--image') args.imageUrl = argv[++i];
+    else if (a === '--google-photo') args.googlePhoto = argv[++i] ?? 'latest';
+    else if (a === '--google-album-url') args.googleAlbumUrl = argv[++i];
     else if (a === '--wait-hours') args.waitHours = Number(argv[++i]);
     else if (a === '--metrics-poll-seconds') args.pollSeconds = Number(argv[++i]);
+    else if (a === '--max-photos') args.maxPhotos = Number(argv[++i]);
     else if (a === '--skip-design') args.skipDesign = true;
     else if (a === '--skip-publish') args.skipPublish = true;
     else if (a === '--skip-review') args.skipReview = true;
@@ -83,6 +93,39 @@ async function main() {
   const { savedPath } = await runOptimizer(args.topic);
 
   let imageUrl = args.imageUrl;
+
+  // ── Google Photos shared album (no API key needed) ────────────────────────
+  if (!imageUrl && args.googleAlbumUrl) {
+    console.log(`\n===== Step 1b: Pick best photo from Google Photos album =====`);
+    try {
+      imageUrl = await pickBestPhoto(args.googleAlbumUrl, { maxPhotos: args.maxPhotos });
+      console.log(`[pipeline] Selected image URL: ${imageUrl}`);
+    } catch (e) {
+      console.warn(`[pipeline] Photo picker failed: ${e.message}. Continuing without image.`);
+      await sendAlert('Instagram pipeline: photo picker failed', e.message);
+    }
+  }
+
+  // ── Google Photos API source ──────────────────────────────────────────────
+  if (!imageUrl && args.googlePhoto) {
+    console.log(`\n===== Step 1b: Fetch image from Google Photos =====`);
+    try {
+      if (args.googlePhoto === 'latest') {
+        imageUrl = await getLatestPhotoUrl();
+      } else if (args.googlePhoto.startsWith('album:')) {
+        const albumId = args.googlePhoto.slice('album:'.length);
+        const urls    = await getAlbumPhotoUrls(albumId, 1);
+        imageUrl      = urls[0];
+      } else {
+        console.warn(`[pipeline] Unknown --google-photo value: ${args.googlePhoto}. Use "latest" or "album:<id>".`);
+      }
+      if (imageUrl) console.log(`[pipeline] Google Photos URL: ${imageUrl}`);
+    } catch (e) {
+      console.warn(`[pipeline] Google Photos fetch failed: ${e.message}. Continuing without image.`);
+      await sendAlert('Instagram pipeline: Google Photos fetch failed', e.message);
+    }
+  }
+
   if (!args.skipDesign && !imageUrl) {
     const hasCanva = process.env.CANVA_CLIENT_ID && process.env.CANVA_TEMPLATE_ID;
     if (hasCanva) {
@@ -91,6 +134,7 @@ async function main() {
         imageUrl = await designPost(savedPath);
       } catch (e) {
         console.warn(`[pipeline] Canva design failed (${e.message}). Continuing without image.`);
+        await sendAlert('Instagram pipeline: Canva design failed', e.message);
       }
     } else {
       console.log(`\n[pipeline] Step 2 skipped — set CANVA_CLIENT_ID + CANVA_TEMPLATE_ID to enable Canva design.`);
@@ -126,4 +170,8 @@ async function main() {
   console.log('\n[pipeline] Done.');
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch(async (e) => {
+  console.error(e);
+  await sendAlert('Instagram pipeline failed', e.message);
+  process.exit(1);
+});

@@ -1,9 +1,10 @@
 # Dependencies
-tools/node_modules/
+node_modules/
 
 # Environment variables
 .env
-.env.local
+.env.*
+!.env.example
 
 # Instagram access token (never commit secrets)
 *.token
@@ -11,9 +12,43 @@ tools/node_modules/
 # Canva OAuth tokens (never commit secrets)
 tools/.canva-tokens.json
 
+# Google OAuth tokens (never commit secrets)
+tools/.google-tokens.json
+
+# Any stray token/credential files
+*.tokens.json
+*-tokens.json
+credentials.json
+client_secret*.json
+*.pem
+*.key
+
 # VS Code local settings (keep mcp.json and chatmodes tracked)
 .vscode/settings.json
+
+# Visual Studio local folder
+.vs/
+
+# Claude Code local settings (personal permissions, not shared)
+.claude/settings.local.json
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# Instagram metrics cache (keep folder via .gitkeep)
+instagram/metrics/*
+!instagram/metrics/.gitkeep
+
+# Generated Claude Desktop config (setup-claude-desktop.ps1 writes it into %APPDATA%)
+claude_desktop_config.json
+*.bak
 
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Office lock files (created while a .docx is open in Word)
+~$*

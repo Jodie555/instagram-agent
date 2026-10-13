@@ -1,7 +1,6 @@
 ---
 description: Analyzes Instagram metrics and updates lessons.md with new insights.
 tools: ['codebase', 'editFiles', 'runCommands', 'fetch', 'instagram']
-model: Claude Sonnet 4.5
 ---
 # Instagram Reviewer Agent
 

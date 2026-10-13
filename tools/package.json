@@ -14,11 +14,21 @@
     "publish": "node agents/publisher.js",
     "review": "node agents/reviewer.js",
     "canva-auth": "node canva-auth.js",
-    "canva-list": "node canva-list-templates.js"
+    "canva-list": "node canva-list-templates.js",
+    "google-photos-auth": "node google-photos-auth.js",
+    "google-photos": "node agents/google-photos.js",
+    "metrics": "node fetch-metrics.js",
+    "diagnose": "node diagnose.mjs",
+    "new-account": "node new-account.js",
+    "mcp": "node ig-mcp-server.js"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "dotenv": "^17.4.2",
     "openai": "^6.37.0"
   }
 }

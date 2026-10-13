@@ -13,10 +13,14 @@
  *   2. Canva redirects to GitHub Pages (docs/callback.html) which displays the code.
  *   3. You paste the code here. Tokens are saved to tools/.canva-tokens.json (gitignored).
  *
- * Redirect URI to register in Canva developer portal:
+ * Redirect URI to register in Canva developer portal: the value of
+ * OAUTH_REDIRECT_URI in .env, or by default
  *   https://jodie555.github.io/instagram-agent/callback.html
+ * If you host docs/callback.html on your own GitHub Pages, set
+ * OAUTH_REDIRECT_URI=https://<you>.github.io/instagram-agent/callback.html
  */
 
+import './agents/llm.js'; // loads .env
 import readline from 'node:readline';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
@@ -28,7 +32,7 @@ const TOKENS_FILE = path.join(__dirname, '.canva-tokens.json');
 
 const CLIENT_ID     = process.env.CANVA_CLIENT_ID;
 const CLIENT_SECRET = process.env.CANVA_CLIENT_SECRET;
-const REDIRECT_URI  = 'https://jodie555.github.io/instagram-agent/callback.html';
+const REDIRECT_URI  = process.env.OAUTH_REDIRECT_URI || 'https://jodie555.github.io/instagram-agent/callback.html';
 const SCOPES        = [
   'design:content:read',
   'design:content:write',
